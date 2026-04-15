@@ -390,7 +390,7 @@ export default function BituCalcApp() {
 
 
           {/* Header */}
-          <header className="px-6 pt-10 pb-4 no-print">
+          <header className="px-6 pt-6 pb-4 no-print">
             <h1 className="text-[24px] font-[800] tracking-[-0.5px] text-primary">Sales Calc</h1>
             <p className="text-[14px] text-secondary mt-1">Bitumax Distribution App</p>
           </header>
