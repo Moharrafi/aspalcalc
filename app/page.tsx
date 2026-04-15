@@ -732,6 +732,76 @@ export default function BituCalcApp() {
             <span className="text-[10px] font-bold uppercase">Log</span>
           </button>
         </nav>
+
+        {/* --- Premium Print Report (Hidden natively via globals.css) --- */}
+        <div className="hidden print:block printable-area">
+          <div className="border-b-4 border-black pb-6 mb-8 text-black">
+            <h1 className="text-4xl font-black uppercase tracking-tighter">Sales Report</h1>
+            <p className="text-sm font-bold uppercase tracking-widest mt-1">ASPAL Distribution System</p>
+          </div>
+
+          <div className="space-y-6 mb-8 text-black">
+            <div>
+              <p className="text-[10px] font-black uppercase text-gray-500">Report Generated</p>
+              <p className="text-lg font-bold">
+                {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+              </p>
+            </div>
+
+            <div className="print-summary-grid">
+              <div className="print-summary-item">
+                <p className="print-summary-label">Total Jual (Revenue)</p>
+                <p className="print-summary-value">{formatCurrency(totalRevenue)}</p>
+              </div>
+              <div className="print-summary-item">
+                <p className="print-summary-label">Total Setor (Cost)</p>
+                <p className="print-summary-value">{formatCurrency(totalCost)}</p>
+              </div>
+              <div className="print-summary-item">
+                <p className="print-summary-label">Total Fee (Profit)</p>
+                <p className="print-summary-value text-green-700">{formatCurrency(totalProfit)}</p>
+              </div>
+            </div>
+          </div>
+
+          <table className="print-table text-black">
+            <thead>
+              <tr>
+                <th>Tanggal</th>
+                <th>Produk</th>
+                <th>Berat</th>
+                <th>Qty</th>
+                <th>Penjualan</th>
+                <th style={{ textAlign: 'right' }}>Fee</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sales.map((sale) => (
+                <tr key={sale.id}>
+                  <td>{sale.date}</td>
+                  <td style={{ fontWeight: 'bold', textTransform: 'capitalize' }}>{sale.type}</td>
+                  <td>{sale.weight}kg</td>
+                  <td>{sale.quantity}</td>
+                  <td style={{ fontWeight: 'bold' }}>{formatCurrency(sale.totalPrice)}</td>
+                  <td style={{ textAlign: 'right', fontWeight: 'bold', color: '#15803d' }}>
+                    {formatCurrency(sale.totalPrice - sale.totalCost)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <div className="mt-20 flex justify-between items-end text-black">
+            <div className="text-[10px] text-gray-500 italic">
+              <p>* Laporan ini dihasilkan secara otomatis oleh sistem.</p>
+              <p>Bitucalc System v1.0</p>
+            </div>
+            <div className="text-right">
+              <p className="text-[11px] font-bold mb-16">Hormat Kami,</p>
+              <p className="text-md font-black">Admin</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
