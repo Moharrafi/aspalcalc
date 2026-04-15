@@ -731,6 +731,8 @@ export default function BituCalcApp() {
             <History size={20} />
             <span className="text-[10px] font-bold uppercase">Log</span>
           </button>
+        </nav>
+
         {/* --- Premium Print Report (Hidden natively via globals.css) --- */}
         <div className="hidden print:block printable-area bg-white text-slate-900 p-8 pt-4 font-sans leading-relaxed">
           
