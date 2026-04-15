@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 
@@ -8,6 +8,19 @@ export const metadata: Metadata = {
   title: 'BituCalc - Sales & Analysis',
   description: 'Mobile-friendly sales calculator and analysis tool.',
   manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'BituCalc',
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#111827',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
