@@ -182,49 +182,54 @@ export default function BituCalcApp() {
       return;
     }
 
-    try {
-      const pricing = calculatePricing(selectedType, effectiveWeight);
-      const newSale: Sale = {
-        id: Math.random().toString(36).substring(7),
-        date: new Date().toISOString().split('T')[0],
-        type: selectedType,
-        weight: effectiveWeight,
-        quantity,
-        totalPrice: pricing.price * quantity,
-        totalCost: pricing.cost * quantity,
-      };
+    const pricing = calculatePricing(selectedType, effectiveWeight);
+    const newSale: Sale = {
+      id: Math.random().toString(36).substring(7),
+      date: new Date().toISOString().split('T')[0],
+      type: selectedType,
+      weight: effectiveWeight,
+      quantity,
+      totalPrice: pricing.price * quantity,
+      totalCost: pricing.cost * quantity,
+    };
 
-      // Save to DB
+    // Optimistic Update: Update UI immediately
+    const prevSales = [...sales];
+    setSales([newSale, ...sales]);
+    setNotification({ message: 'Data berhasil di simpan', type: 'success' });
+    setQuantity(1);
+    if (weight === 0) setCustomWeight('');
+
+    try {
       const response = await fetch('/api/sales', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newSale)
       });
-
       if (!response.ok) throw new Error();
-
-      setSales([newSale, ...sales]);
-      setQuantity(1);
-      if (weight === 0) setCustomWeight('');
-      setNotification({ message: 'Data berhasil di simpan', type: 'success' });
     } catch (error) {
-      setNotification({ message: 'Gagal mencatat penjualan ke database.', type: 'error' });
+      // Revert if failed
+      setSales(prevSales);
+      setNotification({ message: 'Gagal sinkron ke database!', type: 'error' });
     }
   };
 
   const handleDeleteSale = async (id: string) => {
+    // Optimistic Update: Remove from UI immediately
+    const prevSales = [...sales];
+    setSales(sales.filter(s => s.id !== id));
+    setNotification({ message: 'Data berhasil di hapus', type: 'success' });
+    setDeleteConfirmId(null);
+
     try {
       const response = await fetch(`/api/sales?id=${id}`, {
         method: 'DELETE'
       });
-      
       if (!response.ok) throw new Error();
-      
-      setSales(sales.filter(s => s.id !== id));
-      setNotification({ message: 'Data berhasil di hapus', type: 'success' });
-      setDeleteConfirmId(null);
     } catch (error) {
-      setNotification({ message: 'Gagal menghapus data.', type: 'error' });
+      // Revert if failed
+      setSales(prevSales);
+      setNotification({ message: 'Gagal menghapus data di database!', type: 'error' });
     }
   };
 
@@ -374,8 +379,9 @@ export default function BituCalcApp() {
             {notification && (
               <motion.div
                 initial={{ y: -100, opacity: 0 }}
-                animate={{ y: 20, opacity: 1 }}
+                animate={{ y: 0, opacity: 1 }}
                 exit={{ y: -100, opacity: 0 }}
+                transition={{ type: 'spring', damping: 20, stiffness: 300 }}
                 className="fixed top-5 left-1/2 -translate-x-1/2 w-full max-w-md px-4 z-[100] no-print"
               >
                 <div className={cn(
