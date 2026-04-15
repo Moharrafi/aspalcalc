@@ -8,13 +8,19 @@ export const metadata: Metadata = {
   title: 'BituCalc - Sales & Analysis',
   description: 'Mobile-friendly sales calculator and analysis tool.',
   manifest: '/manifest.json',
-  themeColor: '#111827',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
     title: 'BituCalc',
   },
+};
+
+export const viewport = {
+  themeColor: '#111827',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
