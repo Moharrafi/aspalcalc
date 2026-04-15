@@ -244,9 +244,130 @@ export default function BituCalcApp() {
   const COLORS = ['#111827', '#10B981', '#6B7280'];
 
   return (
-    <div className="min-h-screen bg-bg flex items-center justify-center p-0 md:p-8">
-      {/* Mobile Frame Container */}
-      <div className="w-full max-w-[375px] h-full md:h-[812px] bg-card md:rounded-[48px] shadow-2xl md:border-[8px] border-primary flex flex-col relative overflow-hidden">
+    <>
+      {/* --- Premium Print Report (Hidden natively via globals.css) --- */}
+      <div className="hidden print:block printable-area bg-white text-slate-900 p-12 font-sans">
+        {/* Professional Header */}
+        <div className="border-b-4 border-slate-900 pb-10 mb-12 flex justify-between items-start">
+          <div className="flex items-center gap-6">
+            <div className="p-4 bg-slate-900 rounded-2xl text-white">
+              <TrendingUp size={40} />
+            </div>
+            <div>
+              <h1 className="text-[48px] font-[1000] uppercase tracking-tighter text-slate-900 leading-none">
+                BITUCALC
+              </h1>
+              <p className="text-[14px] font-[800] uppercase tracking-[0.4em] text-slate-500 mt-2">
+                Sales & Profit Analytics
+              </p>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="bg-slate-50 px-6 py-4 rounded-2xl border-2 border-slate-100 mb-2">
+              <p className="text-[10px] font-[800] uppercase tracking-[0.2em] text-slate-400 mb-1">
+                Generated On
+              </p>
+              <p className="text-[16px] font-[900] text-slate-900">
+                {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+              </p>
+            </div>
+            <p className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-widest">
+              DOC-ID: #{new Date().getTime().toString().slice(-8)}
+            </p>
+          </div>
+        </div>
+
+        {/* Financial Summary */}
+        <div className="grid grid-cols-3 gap-8 mb-16">
+          <div className="bg-slate-50 p-8 rounded-[32px] border-2 border-slate-100">
+            <p className="text-[11px] font-[900] uppercase tracking-[0.2em] text-slate-500 mb-3">Total Jual (Revenue)</p>
+            <p className="text-[32px] font-[1000] tracking-tighter text-slate-900">{formatCurrency(totalRevenue)}</p>
+          </div>
+          <div className="bg-slate-50 p-8 rounded-[32px] border-2 border-slate-100">
+            <p className="text-[11px] font-[900] uppercase tracking-[0.2em] text-slate-500 mb-3">Total Setor (Cost)</p>
+            <p className="text-[32px] font-[1000] tracking-tighter text-slate-900">{formatCurrency(totalCost)}</p>
+          </div>
+          <div className="bg-emerald-600 p-8 rounded-[32px] shadow-2xl shadow-emerald-200 !print:bg-emerald-600">
+            <p className="text-[11px] font-[900] uppercase tracking-[0.2em] text-emerald-100 mb-3 text-white">Total Fee (Profit)</p>
+            <p className="text-[36px] font-[1000] tracking-tighter text-white tabular-nums">{formatCurrency(totalProfit)}</p>
+          </div>
+        </div>
+
+        {/* Transaction History */}
+        <div className="mb-20">
+          <div className="flex items-center justify-between mb-6 px-2">
+            <h2 className="text-[16px] font-[1000] uppercase tracking-[0.3em] text-slate-400">Transaction Ledger</h2>
+            <p className="text-[12px] font-bold text-slate-400 uppercase">{sales.length} Recorded Entries</p>
+          </div>
+          
+          <div className="border-2 border-slate-900 rounded-[28px] overflow-hidden shadow-sm">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-900 border-b border-slate-900">
+                  <th className="py-6 px-8 text-[11px] font-[1000] uppercase tracking-[0.2em] text-slate-400">Date</th>
+                  <th className="py-6 px-8 text-[11px] font-[1000] uppercase tracking-[0.2em] text-slate-400">Description</th>
+                  <th className="py-6 px-8 text-[11px] font-[1000] uppercase tracking-[0.2em] text-slate-400 text-center">Qty</th>
+                  <th className="py-6 px-8 text-[11px] font-[1000] uppercase tracking-[0.2em] text-slate-400 text-right">Selling Price</th>
+                  <th className="py-6 px-8 text-[11px] font-[1000] uppercase tracking-[0.2em] text-emerald-400 text-right bg-emerald-950/20">Profit Fee</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y-2 divide-slate-100">
+                {sales.map((sale) => (
+                  <tr key={sale.id} className="bg-white">
+                    <td className="py-5 px-8 text-[13px] font-bold text-slate-500">{sale.date}</td>
+                    <td className="py-5 px-8">
+                      <div className="flex items-center gap-3">
+                        <span className="text-[15px] font-[1000] text-slate-900 uppercase">{sale.type}</span>
+                        <span className="text-[10px] font-black text-slate-400 border border-slate-200 px-2 py-0.5 rounded-lg">{sale.weight}kg</span>
+                      </div>
+                    </td>
+                    <td className="py-5 px-8 text-[16px] text-center font-black text-slate-900 tabular-nums">{sale.quantity}</td>
+                    <td className="py-5 px-8 text-[15px] text-right font-[900] text-slate-900 tabular-nums">
+                      {formatCurrency(sale.totalPrice)}
+                    </td>
+                    <td className="py-5 px-8 text-[16px] text-right font-[1000] text-emerald-600 tabular-nums bg-emerald-50/40">
+                      {formatCurrency(sale.totalPrice - sale.totalCost)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Official Signatures */}
+        <div className="mt-auto grid grid-cols-2 gap-40 px-8 pt-10 border-t-4 border-slate-100">
+          <div className="max-w-[350px]">
+            <p className="text-[11px] font-black text-slate-900 uppercase tracking-widest mb-3">Compliance Statement</p>
+            <p className="text-[10px] text-slate-400 font-bold leading-relaxed uppercase tracking-wider">
+              This financial report is automatically generated and verified. Any unauthorized modification is prohibited and may invalidate the record.
+            </p>
+            <div className="mt-8 flex items-center gap-4">
+              <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center text-slate-300">
+                <CheckCircle2 size={24} />
+              </div>
+              <p className="text-[9px] font-mono text-slate-300">BITUCALC DIGITAL VERIFICATION ACTIVE</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-20">
+            <div className="text-center">
+              <p className="text-[11px] font-black text-slate-400 mb-28 uppercase tracking-[0.2em]">Prepared By</p>
+              <div className="border-b-4 border-slate-900 w-full mb-3"></div>
+              <p className="text-[14px] font-black text-slate-900 uppercase tracking-tighter">Inventory Audit</p>
+            </div>
+            <div className="text-center">
+              <p className="text-[11px] font-black text-slate-400 mb-28 uppercase tracking-[0.2em]">Verified By</p>
+              <div className="border-b-4 border-slate-900 w-full mb-3"></div>
+              <p className="text-[14px] font-black text-slate-900 uppercase tracking-tighter">Finance Dept</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="min-h-screen bg-bg flex items-center justify-center p-0 md:p-8 no-print">
+        {/* Mobile Frame Container */}
+        <div className="w-full max-w-[375px] h-full md:h-[812px] bg-card md:rounded-[48px] shadow-2xl md:border-[8px] border-primary flex flex-col relative overflow-hidden">
         {/* Notification Toast */}
         <AnimatePresence>
           {notification && (
@@ -732,137 +853,9 @@ export default function BituCalcApp() {
             <span className="text-[10px] font-bold uppercase">Log</span>
           </button>
         </nav>
-
-        {/* --- Premium Print Report (Hidden natively via globals.css) --- */}
-        <div className="hidden print:block printable-area bg-white text-slate-900 p-12 font-sans leading-relaxed">
-          
-          {/* Header Section with "Logo" */}
-          <div className="border-b-4 border-slate-900 pb-8 mb-10 flex justify-between items-start">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-slate-900 rounded-xl text-white">
-                <TrendingUp size={32} />
-              </div>
-              <div>
-                <h1 className="text-[42px] font-[1000] uppercase tracking-tighter text-slate-900 leading-none">
-                  BITUCALC
-                </h1>
-                <p className="text-[12px] font-[800] uppercase tracking-[0.3em] text-slate-500 mt-2">
-                  Official Sales Report
-                </p>
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="bg-slate-100 px-4 py-2 rounded-lg border border-slate-200">
-                <p className="text-[9px] font-[800] uppercase tracking-widest text-slate-400 mb-0.5">
-                  Report Generated
-                </p>
-                <p className="text-[14px] font-[800] text-slate-800">
-                  {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                </p>
-              </div>
-              <p className="text-[10px] font-mono text-slate-400 mt-3 uppercase tracking-tighter">
-                REF: BTX-{new Date().getTime().toString().slice(-6)}
-              </p>
-            </div>
-          </div>
-
-          <div className="mb-10">
-            <h2 className="text-[14px] font-[900] uppercase tracking-[0.2em] text-slate-500 mb-4 px-1">Executive Summary</h2>
-            <div className="grid grid-cols-3 gap-6">
-              <div className="bg-slate-50 p-6 rounded-[24px] border border-slate-200 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-3 opacity-10">
-                  <ArrowUpRight size={40} />
-                </div>
-                <p className="text-[10px] font-[800] uppercase tracking-widest text-slate-500 mb-2">Total Revenue (Jual)</p>
-                <p className="text-[26px] font-[900] tracking-tight text-slate-900">{formatCurrency(totalRevenue)}</p>
-              </div>
-              <div className="bg-slate-50 p-6 rounded-[24px] border border-slate-200 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-3 opacity-10">
-                  <ArrowDownRight size={40} />
-                </div>
-                <p className="text-[10px] font-[800] uppercase tracking-widest text-slate-500 mb-2">Total Cost (Setor)</p>
-                <p className="text-[26px] font-[900] tracking-tight text-slate-900">{formatCurrency(totalCost)}</p>
-              </div>
-              <div className="bg-emerald-500 p-6 rounded-[24px] border border-emerald-600 shadow-lg shadow-emerald-100 relative overflow-hidden !print:bg-emerald-500">
-                <div className="absolute top-0 right-0 p-3 opacity-20 text-white">
-                  <TrendingUp size={40} />
-                </div>
-                <p className="text-[10px] font-[800] uppercase tracking-widest text-emerald-100 mb-2">Net Profit (Fee)</p>
-                <p className="text-[28px] font-[950] tracking-tight text-white">{formatCurrency(totalProfit)}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Detailed Ledger Table */}
-          <div className="mt-12">
-            <h2 className="text-[14px] font-[900] uppercase tracking-[0.2em] text-slate-500 mb-4 px-1">Transaction Details</h2>
-            <div className="border border-slate-200 rounded-[24px] overflow-hidden">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-900 border-b border-slate-800">
-                    <th className="py-5 px-6 text-[11px] font-[900] uppercase tracking-wider text-slate-400">Date</th>
-                    <th className="py-5 px-6 text-[11px] font-[900] uppercase tracking-wider text-slate-400 text-center">Qty</th>
-                    <th className="py-5 px-6 text-[11px] font-[900] uppercase tracking-wider text-slate-400">Product Specification</th>
-                    <th className="py-5 px-6 text-[11px] font-[900] uppercase tracking-wider text-slate-400 text-right">Revenue</th>
-                    <th className="py-5 px-6 text-[11px] font-[900] uppercase tracking-wider text-emerald-400 text-right bg-emerald-950/20">Profit Fee</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {sales.map((sale) => (
-                    <tr key={sale.id} className="bg-white">
-                      <td className="py-4 px-6 text-[12px] font-bold text-slate-500 tabular-nums">{sale.date}</td>
-                      <td className="py-4 px-6 text-[14px] text-center font-black text-slate-900">{sale.quantity}</td>
-                      <td className="py-4 px-6">
-                        <span className="text-[14px] font-[900] text-slate-900 uppercase">{sale.type}</span>
-                        <span className="text-[11px] font-black text-slate-400 ml-2 bg-slate-100 px-2 py-0.5 rounded-full">{sale.weight}kg</span>
-                      </td>
-                      <td className="py-4 px-6 text-[14px] text-right font-[900] text-slate-900 tabular-nums">
-                        {formatCurrency(sale.totalPrice)}
-                      </td>
-                      <td className="py-4 px-6 text-[14px] text-right font-[950] text-emerald-600 tabular-nums bg-emerald-50/30">
-                        {formatCurrency(sale.totalPrice - sale.totalCost)}
-                      </td>
-                    </tr>
-                  ))}
-                  {sales.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="py-20 text-center text-slate-400 text-sm font-black italic uppercase tracking-widest">
-                        --- No Transaction Data Found ---
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Verification & Signatures */}
-          <div className="mt-24 pt-10 border-t-2 border-slate-100 flex justify-between items-start">
-            <div className="text-[10px] text-slate-400 font-bold leading-[1.8] max-w-[320px] uppercase tracking-wider">
-              <p className="mb-2 text-slate-900 font-black">Authorized Document</p>
-              <p>This report acts as a verifiable record of sales. All data is cross-referenced with the internal Bitucalc database logs for accuracy.</p>
-              <div className="mt-6 flex gap-4 opacity-50">
-                <div className="border border-slate-400 px-2 py-1 rounded">BT-V1.3</div>
-                <div className="border border-slate-400 px-2 py-1 rounded">SYS-2026</div>
-              </div>
-            </div>
-            
-            <div className="flex gap-16 mr-8">
-              <div className="text-center w-40">
-                <p className="text-[11px] font-black text-slate-400 mb-24 uppercase tracking-[0.2em]">Validated By</p>
-                <div className="border-b-2 border-slate-900 w-full mb-2"></div>
-                <p className="text-[13px] font-black text-slate-900 uppercase">System Admin</p>
-              </div>
-              <div className="text-center w-40">
-                <p className="text-[11px] font-black text-slate-400 mb-24 uppercase tracking-[0.2em]">Authorized By</p>
-                <div className="border-b-2 border-slate-900 w-full mb-2"></div>
-                <p className="text-[13px] font-black text-slate-900 uppercase">Manager</p>
-              </div>
-            </div>
-          </div>
-          
-        </div>
       </div>
     </div>
+  </>
   );
 }
+
