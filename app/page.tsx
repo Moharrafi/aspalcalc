@@ -375,10 +375,10 @@ export default function BituCalcApp() {
                 className="absolute top-0 left-4 right-4 z-[100] no-print"
               >
                 <div className={cn(
-                  "flex items-center gap-3 p-4 rounded-[20px] shadow-lg border",
+                  "flex items-center gap-3 p-4 rounded-[20px] shadow-2xl border",
                   notification.type === 'success'
-                    ? "bg-white border-success text-success"
-                    : "bg-white border-red-500 text-red-500"
+                    ? "bg-success text-white border-success"
+                    : "bg-red-500 text-white border-red-500"
                 )}>
                   {notification.type === 'success' ? <CheckCircle2 size={20} /> : <AlertCircle size={20} />}
                   <span className="text-[13px] font-bold">{notification.message}</span>
