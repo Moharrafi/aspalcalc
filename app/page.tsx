@@ -571,7 +571,7 @@ export default function BituCalcApp() {
             </main>
 
             {/* Bottom Navigation - Fixed at bottom */}
-            <nav className="shrink-0 bg-white/80 backdrop-blur-xl border-t border-border/50 px-10 py-5 pb-8 flex justify-between items-center z-50">
+            <nav className="shrink-0 bg-white/80 backdrop-blur-xl border-t border-border/50 px-6 py-5 pb-8 flex justify-center gap-16 items-center z-50">
               <button
                 onClick={() => setActiveTab('calculator')}
                 className={cn(
