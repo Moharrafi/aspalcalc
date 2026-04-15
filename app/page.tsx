@@ -17,7 +17,8 @@ import {
   Printer,
   Download,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  AlertTriangle
 } from 'lucide-react';
 import {
   BarChart,
@@ -153,6 +154,7 @@ export default function BituCalcApp() {
 
   // Notification State
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   useEffect(() => {
     if (notification) {
@@ -211,7 +213,6 @@ export default function BituCalcApp() {
   };
 
   const handleDeleteSale = async (id: string) => {
-    if (!window.confirm('Apakah Anda yakin ingin menghapus data ini secara permanen?')) return;
     try {
       const response = await fetch(`/api/sales?id=${id}`, {
         method: 'DELETE'
@@ -221,6 +222,7 @@ export default function BituCalcApp() {
       
       setSales(sales.filter(s => s.id !== id));
       setNotification({ message: 'Data berhasil di hapus', type: 'success' });
+      setDeleteConfirmId(null);
     } catch (error) {
       setNotification({ message: 'Gagal menghapus data.', type: 'error' });
     }
@@ -799,7 +801,7 @@ export default function BituCalcApp() {
                         <div className="flex items-center gap-3">
                           <p className="text-[14px] font-bold">{formatCurrency(sale.totalPrice)}</p>
                           <button
-                            onClick={() => handleDeleteSale(sale.id)}
+                            onClick={() => setDeleteConfirmId(sale.id)}
                             className="text-secondary hover:text-red-500 transition-colors"
                           >
                             <Trash2 size={14} />
@@ -854,6 +856,50 @@ export default function BituCalcApp() {
           </nav>
         </div>
       </div>
+      {/* Custom Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deleteConfirmId && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 no-print">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setDeleteConfirmId(null)}
+              className="absolute inset-0 bg-primary/40 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative bg-white w-full max-w-sm rounded-[32px] p-8 shadow-2xl overflow-hidden"
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-6">
+                  <AlertTriangle className="text-red-500" size={32} />
+                </div>
+                <h3 className="text-[20px] font-bold text-primary mb-2">Hapus Data?</h3>
+                <p className="text-secondary text-[14px] leading-relaxed mb-8">
+                  Apakah Anda yakin ingin menghapus data penjualan ini? Tindakan ini tidak dapat dibatalkan.
+                </p>
+                <div className="grid grid-cols-2 gap-3 w-full">
+                  <button
+                    onClick={() => setDeleteConfirmId(null)}
+                    className="py-4 rounded-[16px] border border-border font-bold text-secondary hover:bg-bg transition-colors"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={() => handleDeleteSale(deleteConfirmId)}
+                    className="py-4 rounded-[16px] bg-red-500 text-white font-bold hover:bg-red-600 transition-colors shadow-lg shadow-red-200"
+                  >
+                    Hapus
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
