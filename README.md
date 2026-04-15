@@ -15,3 +15,5 @@ Cara Menjalankan:
 2. Jalankan: pnpm install
 3. Jalankan init database: node scratch/init_db.js
 4. Jalankan aplikasi: pnpm run dev
+
+Dibuat oleh Moharrafi

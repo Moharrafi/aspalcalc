@@ -275,13 +275,8 @@ export default function BituCalcApp() {
   const COLORS = ['#F97316', '#10B981', '#000000'];
 
   return (
-    <div className="min-h-screen bg-bg flex items-center justify-center p-0 md:p-8">
-      {/* Mobile Frame Container */}
-      <div className="w-full max-w-[375px] h-full md:h-[812px] bg-card md:rounded-[48px] shadow-2xl md:border-[8px] border-primary flex flex-col relative overflow-hidden">
-        {/* Notch for desktop view */}
-        <div className="hidden md:block absolute top-0 left-1/2 -translate-x-1/2 w-[120px] h-[24px] bg-primary rounded-b-[16px] z-50" />
-
-        {/* Header */}
+    <div className="min-h-screen bg-card flex flex-col relative overflow-hidden">
+      {/* Header */}
         <header className="px-6 pt-10 pb-4">
           <h1 className="text-[24px] font-[800] tracking-[-0.5px] text-primary">Sales Calc</h1>
           <p className="text-[14px] text-secondary mt-1">Aspal Distribution App</p>
@@ -788,7 +783,6 @@ export default function BituCalcApp() {
             </div>
           )}
         </AnimatePresence>
-      </div>
 
       {/* Hidden Print Report */}
       <div id="print-report" className="fixed inset-0 bg-white z-[9999] p-10 overflow-auto invisible print:visible pointer-events-none print:pointer-events-auto">
