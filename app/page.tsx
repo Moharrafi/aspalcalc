@@ -121,9 +121,11 @@ const calculatePricing = (type: ProductType, weight: number): { price: number; c
 
 export default function BituCalcApp() {
   const [sales, setSales] = useState<Sale[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
   
   // Fetch from DB
   useEffect(() => {
+    setIsMounted(true);
     const fetchSales = async () => {
       try {
         const response = await fetch('/api/sales');
@@ -229,15 +231,15 @@ export default function BituCalcApp() {
 
   // --- Analysis Computations ---
 
-  const totalRevenue = useMemo(() => sales.reduce((acc, s) => acc + s.totalPrice, 0), [sales]);
-  const totalCost = useMemo(() => sales.reduce((acc, s) => acc + s.totalCost, 0), [sales]);
+  const totalRevenue = useMemo(() => sales.reduce((acc, s) => acc + (Number(s.totalPrice) || 0), 0), [sales]);
+  const totalCost = useMemo(() => sales.reduce((acc, s) => acc + (Number(s.totalCost) || 0), 0), [sales]);
   const totalProfit = useMemo(() => totalRevenue - totalCost, [totalRevenue, totalCost]);
-  const totalWeight = useMemo(() => sales.reduce((acc, s) => acc + (s.weight * s.quantity), 0), [sales]);
+  const totalWeight = useMemo(() => sales.reduce((acc, s) => acc + ((Number(s.weight) || 0) * (Number(s.quantity) || 0)), 0), [sales]);
 
   const salesByType = useMemo(() => {
     const data: Record<string, number> = { bitumax: 0, hijau: 0, hitam: 0 };
     sales.forEach(s => {
-      data[s.type] += s.totalPrice;
+      data[s.type] += (Number(s.totalPrice) || 0);
     });
     return Object.entries(data).map(([name, value]) => ({ name, value }));
   }, [sales]);
@@ -254,10 +256,10 @@ export default function BituCalcApp() {
         data[key] = { revenue: 0, cost: 0, fee: 0, weight: 0, count: 0 };
       }
 
-      data[key].revenue += s.totalPrice;
-      data[key].cost += s.totalCost;
-      data[key].fee += (s.totalPrice - s.totalCost);
-      data[key].weight += (s.weight * s.quantity);
+      data[key].revenue += (Number(s.totalPrice) || 0);
+      data[key].cost += (Number(s.totalCost) || 0);
+      data[key].fee += (Number(s.totalPrice || 0) - Number(s.totalCost || 0));
+      data[key].weight += ((Number(s.weight) || 0) * (Number(s.quantity) || 0));
       data[key].count += 1;
     });
 
@@ -283,8 +285,8 @@ export default function BituCalcApp() {
             <p className="text-sm font-medium text-gray-600 italic">Bitucalc Sales Analytics System</p>
           </div>
           <div className="text-right text-xs">
-            <p>Tanggal Cetak: {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-            <p className="mt-1">Ref ID: #{new Date().getTime().toString().slice(-6)}</p>
+            <p>Tanggal Cetak: {isMounted ? new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : ''}</p>
+            <p className="mt-1">Ref ID: #{isMounted ? new Date().getTime().toString().slice(-6) : '......'}</p>
           </div>
         </div>
 
