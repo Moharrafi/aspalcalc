@@ -72,10 +72,14 @@
     width: 100% !important;
     visibility: visible !important;
     background: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
   
   .printable-area * {
     visibility: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   /* Hide UI elements that shouldn't be printed */
@@ -94,50 +98,5 @@
   .recharts-responsive-container {
     width: 100% !important;
     height: 300px !important;
-  }
-
-  /* Table styles for print */
-  .print-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-  }
-  .print-table th, .print-table td {
-    border-bottom: 1px solid #E5E7EB;
-    padding: 12px 6px;
-    text-align: left;
-    font-size: 11px;
-  }
-  .print-table th {
-    font-weight: 900;
-    text-transform: uppercase;
-    font-size: 10px;
-  }
-
-  /* Summary grid for print */
-  .print-summary-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-    margin-bottom: 30px;
-    padding: 20px 0;
-    border-top: 2px solid #000;
-    border-bottom: 2px solid #000;
-  }
-  .print-summary-item {
-    padding: 0;
-    border: none;
-  }
-  .print-summary-label {
-    font-size: 10px;
-    text-transform: uppercase;
-    color: #6B7280;
-    font-weight: bold;
-    margin-bottom: 5px;
-  }
-  .print-summary-value {
-    font-size: 20px;
-    font-weight: 900;
-    color: #000;
   }
 }

@@ -731,76 +731,98 @@ export default function BituCalcApp() {
             <History size={20} />
             <span className="text-[10px] font-bold uppercase">Log</span>
           </button>
-        </nav>
-
         {/* --- Premium Print Report (Hidden natively via globals.css) --- */}
-        <div className="hidden print:block printable-area">
-          <div className="border-b-4 border-black pb-6 mb-8 text-black">
-            <h1 className="text-4xl font-black uppercase tracking-tighter">Sales Report</h1>
-            <p className="text-sm font-bold uppercase tracking-widest mt-1">ASPAL Distribution System</p>
-          </div>
-
-          <div className="space-y-6 mb-8 text-black">
+        <div className="hidden print:block printable-area bg-white text-slate-900 p-8 pt-4 font-sans leading-relaxed">
+          
+          {/* Header Section */}
+          <div className="border-b-[3px] border-slate-900 pb-5 mb-8 flex justify-between items-end">
             <div>
-              <p className="text-[10px] font-black uppercase text-gray-500">Report Generated</p>
-              <p className="text-lg font-bold">
-                {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+              <h1 className="text-[34px] font-[1000] uppercase tracking-tighter text-slate-900 leading-none">
+                Sales Report
+              </h1>
+              <p className="text-[12px] font-[800] uppercase tracking-[0.2em] text-slate-500 mt-2">
+                ASPAL Distribution System
               </p>
             </div>
-
-            <div className="print-summary-grid">
-              <div className="print-summary-item">
-                <p className="print-summary-label">Total Jual (Revenue)</p>
-                <p className="print-summary-value">{formatCurrency(totalRevenue)}</p>
-              </div>
-              <div className="print-summary-item">
-                <p className="print-summary-label">Total Setor (Cost)</p>
-                <p className="print-summary-value">{formatCurrency(totalCost)}</p>
-              </div>
-              <div className="print-summary-item">
-                <p className="print-summary-label">Total Fee (Profit)</p>
-                <p className="print-summary-value text-green-700">{formatCurrency(totalProfit)}</p>
-              </div>
+            <div className="text-right">
+              <p className="text-[9px] font-[800] uppercase tracking-widest text-slate-400 mb-0.5">
+                Report Generated
+              </p>
+              <p className="text-[13px] font-[700] text-slate-800">
+                {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+              </p>
             </div>
           </div>
 
-          <table className="print-table text-black">
+          {/* Key Metrics / KPI Grid */}
+          <div className="flex justify-between gap-6 mb-8 mt-2">
+            <div className="flex-1 bg-slate-50 p-5 rounded-2xl border border-slate-200">
+              <p className="text-[9px] font-[800] uppercase tracking-widest text-slate-500 mb-1.5">Total Revenue (Jual)</p>
+              <p className="text-[22px] font-[900] tracking-tight text-slate-900">{formatCurrency(totalRevenue)}</p>
+            </div>
+            <div className="flex-1 bg-slate-50 p-5 rounded-2xl border border-slate-200">
+              <p className="text-[9px] font-[800] uppercase tracking-widest text-slate-500 mb-1.5">Total Cost (Setor)</p>
+              <p className="text-[22px] font-[900] tracking-tight text-slate-900">{formatCurrency(totalCost)}</p>
+            </div>
+            <div className="flex-1 bg-emerald-50 p-5 rounded-2xl border border-emerald-200/60 !print:bg-emerald-50">
+              <p className="text-[9px] font-[800] uppercase tracking-widest text-emerald-700 mb-1.5">Net Profit (Fee)</p>
+              <p className="text-[22px] font-[900] tracking-tight text-emerald-800">{formatCurrency(totalProfit)}</p>
+            </div>
+          </div>
+
+          {/* Detailed Ledger Table */}
+          <table className="w-full text-left border-collapse mt-6">
             <thead>
-              <tr>
-                <th>Tanggal</th>
-                <th>Produk</th>
-                <th>Berat</th>
-                <th>Qty</th>
-                <th>Penjualan</th>
-                <th style={{ textAlign: 'right' }}>Fee</th>
+              <tr className="border-b-[2px] border-slate-400 bg-slate-50">
+                <th className="py-3 px-3 text-[10px] font-[900] uppercase tracking-wider text-slate-600">Tanggal</th>
+                <th className="py-3 px-3 text-[10px] font-[900] uppercase tracking-wider text-slate-600">Produk</th>
+                <th className="py-3 px-3 text-[10px] font-[900] uppercase tracking-wider text-slate-600 text-center border-l border-slate-200">Qty</th>
+                <th className="py-3 px-3 text-[10px] font-[900] uppercase tracking-wider text-slate-600 text-right border-l border-slate-200">Penjualan</th>
+                <th className="py-3 px-3 text-[10px] font-[900] uppercase tracking-wider text-emerald-700 text-right bg-emerald-50/50">Fee Profit</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-slate-100 border-b-[2px] border-slate-200">
               {sales.map((sale) => (
-                <tr key={sale.id}>
-                  <td>{sale.date}</td>
-                  <td style={{ fontWeight: 'bold', textTransform: 'capitalize' }}>{sale.type}</td>
-                  <td>{sale.weight}kg</td>
-                  <td>{sale.quantity}</td>
-                  <td style={{ fontWeight: 'bold' }}>{formatCurrency(sale.totalPrice)}</td>
-                  <td style={{ textAlign: 'right', fontWeight: 'bold', color: '#15803d' }}>
+                <tr key={sale.id} className="hover:bg-slate-50/50">
+                  <td className="py-3.5 px-3 text-[11px] font-medium text-slate-600 tabular-nums">{sale.date}</td>
+                  <td className="py-3.5 px-3">
+                    <span className="text-[12px] font-[800] text-slate-900 capitalize">{sale.type}</span>
+                    <span className="text-[11px] text-slate-500 font-medium ml-1 bg-slate-100 px-1.5 py-0.5 rounded-md">{sale.weight}kg</span>
+                  </td>
+                  <td className="py-3.5 px-3 text-[12px] text-center font-[700] text-slate-700 border-l border-slate-50/50">{sale.quantity}</td>
+                  <td className="py-3.5 px-3 text-[12px] text-right font-[800] text-slate-900 tabular-nums border-l border-slate-50/50">
+                    {formatCurrency(sale.totalPrice)}
+                  </td>
+                  <td className="py-3.5 px-3 text-[12px] text-right font-[800] text-emerald-700 tabular-nums bg-emerald-50/20">
                     {formatCurrency(sale.totalPrice - sale.totalCost)}
                   </td>
                 </tr>
               ))}
+              {sales.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="py-12 text-center text-slate-400 text-sm font-medium italic">
+                    Belum ada data penjualan tercatat.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
 
-          <div className="mt-20 flex justify-between items-end text-black">
-            <div className="text-[10px] text-gray-500 italic">
-              <p>* Laporan ini dihasilkan secara otomatis oleh sistem.</p>
-              <p>Bitucalc System v1.0</p>
+          {/* Signatures & Footer info */}
+          <div className="mt-16 pt-8 border-t border-slate-200 flex justify-between items-end">
+            <div className="text-[9px] text-slate-400 font-medium leading-relaxed max-w-[250px]">
+              <p className="mb-0.5 text-slate-500 font-bold uppercase tracking-widest">Confidential Report</p>
+              <p>Laporan ini dihasilkan secara otomatis oleh sistem Bitucalc Analytics. Data bersifat sah berdasarkan rekaman database sistem.</p>
+              <p className="mt-2 text-[8px] font-mono opacity-60">ID: {Math.random().toString(36).substring(2, 10).toUpperCase()} / v1.2</p>
             </div>
-            <div className="text-right">
-              <p className="text-[11px] font-bold mb-16">Hormat Kami,</p>
-              <p className="text-md font-black">Admin</p>
+            
+            <div className="text-center w-48 mr-8">
+              <p className="text-[11px] font-bold text-slate-600 mb-20 uppercase tracking-widest">Disetujui Oleh,</p>
+              <div className="border-b-[1.5px] border-slate-400 w-full mb-1 border-dashed"></div>
+              <p className="text-[12px] font-[900] text-slate-900 uppercase">Administrator</p>
             </div>
           </div>
+          
         </div>
       </div>
     </div>
