@@ -325,9 +325,9 @@ export default function BituCalcApp() {
             <tbody className="divide-y divide-gray-200">
               {sales.map((sale) => (
                 <tr key={sale.id} className="divide-x divide-black">
-                  <td className="p-3">{sale.date}</td>
+                  <td className="p-3">{new Date(sale.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</td>
                   <td className="p-3">
-                    <span className="font-bold uppercase">{sale.type}</span> ({sale.weight}kg)
+                    <span className="font-bold uppercase">{sale.type}</span> ({Number(sale.weight)}kg)
                   </td>
                   <td className="p-3 text-center font-bold">{sale.quantity}</td>
                   <td className="p-3 text-right">{formatCurrency(sale.totalPrice)}</td>
@@ -790,8 +790,10 @@ export default function BituCalcApp() {
                     {filteredSales.map((sale) => (
                       <div key={sale.id} className="bg-bg p-4 rounded-[16px] flex items-center justify-between group">
                         <div>
-                          <p className="text-[14px] font-bold capitalize">{sale.type} {sale.weight}kg</p>
-                          <p className="text-[11px] text-secondary">{sale.date} • Qty: {sale.quantity}</p>
+                          <p className="text-[14px] font-bold capitalize">{sale.type} {Number(sale.weight)}kg</p>
+                          <p className="text-[11px] text-secondary">
+                            {new Date(sale.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })} • Qty: {sale.quantity}
+                          </p>
                           <p className="text-[10px] text-success font-bold mt-1">Fee: {formatCurrency(sale.totalPrice - sale.totalCost)}</p>
                         </div>
                         <div className="flex items-center gap-3">
