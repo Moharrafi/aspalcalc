@@ -276,13 +276,13 @@ export default function BituCalcApp() {
 
   return (
     <div className="h-screen h-[100dvh] bg-card flex flex-col relative overflow-hidden">
-      {/* Header */}
-        <header className="px-6 pt-10 pb-4">
-          <h1 className="text-[24px] font-[800] tracking-[-0.5px] text-primary">Sales Calc</h1>
-          <p className="text-[14px] text-secondary mt-1">Aspal Distribution App</p>
+        {/* Header */}
+        <header className="px-6 pt-6 pb-2">
+          <h1 className="text-[22px] font-[900] tracking-[-0.5px] text-primary">Sales Calc</h1>
+          <p className="text-[12px] text-secondary">Aspal Distribution App</p>
         </header>
 
-        <div className="flex-1 overflow-y-auto no-scrollbar px-6 pb-24">
+        <main className="flex-1 overflow-y-auto no-scrollbar px-6 pt-2 pb-24">
           <AnimatePresence mode="wait">
             {isLoading ? (
               <motion.div
@@ -652,7 +652,9 @@ export default function BituCalcApp() {
                         <div key={sale.id} className="bg-bg p-4 rounded-[16px] flex items-center justify-between group">
                           <div>
                             <p className="text-[14px] font-bold capitalize">{sale.type} {sale.weight}kg</p>
-                            <p className="text-[11px] text-secondary">{sale.date} • Qty: {sale.quantity}</p>
+                            <p className="text-[11px] text-secondary">
+                              {new Date(sale.date).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' })} • Qty: {sale.quantity}
+                            </p>
                             <p className="text-[10px] text-success font-bold mt-1">Fee: {formatCurrency(sale.totalPrice - sale.totalCost)}</p>
                           </div>
                           <div className="flex items-center gap-3">
@@ -678,10 +680,10 @@ export default function BituCalcApp() {
               </>
             )}
           </AnimatePresence>
-        </div>
+        </main>
 
-        {/* Navigation Bar */}
-        <nav className="absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-border px-8 py-4 flex items-center justify-around z-50">
+        {/* Bottom Navigation */}
+        <nav className="absolute bottom-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-t border-border/50 px-8 py-4 flex justify-between items-center z-50">
           <button
             onClick={() => setActiveTab('calculator')}
             className={cn(
