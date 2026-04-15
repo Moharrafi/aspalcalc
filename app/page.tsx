@@ -248,9 +248,10 @@ export default function BituCalcApp() {
     const data: Record<string, { revenue: number; cost: number; fee: number; weight: number; count: number }> = {};
 
     [...sales].reverse().forEach(s => {
+      const dateOnly = s.date.split('T')[0];
       const key = statPeriod === 'daily'
-        ? s.date
-        : s.date.substring(0, 7); // YYYY-MM
+        ? dateOnly
+        : dateOnly.substring(0, 7); // YYYY-MM
 
       if (!data[key]) {
         data[key] = { revenue: 0, cost: 0, fee: 0, weight: 0, count: 0 };
