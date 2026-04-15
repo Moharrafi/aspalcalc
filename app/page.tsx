@@ -275,7 +275,7 @@ export default function BituCalcApp() {
   const COLORS = ['#F97316', '#10B981', '#000000'];
 
   return (
-    <div className="min-h-screen bg-card flex flex-col relative overflow-hidden">
+    <div className="h-screen h-[100dvh] bg-card flex flex-col relative overflow-hidden">
       {/* Header */}
         <header className="px-6 pt-10 pb-4">
           <h1 className="text-[24px] font-[800] tracking-[-0.5px] text-primary">Sales Calc</h1>
