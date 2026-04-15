@@ -363,9 +363,9 @@ export default function BituCalcApp() {
         </div>
       </div>
 
-      <div className="min-h-screen bg-bg flex items-center justify-center p-0 md:p-8 no-print">
-        {/* Mobile Frame Container */}
-        <div className="w-full max-w-[375px] h-full md:h-[812px] bg-card md:rounded-[48px] shadow-2xl md:border-[8px] border-primary flex flex-col relative overflow-hidden">
+      <div className="min-h-screen bg-bg no-print">
+        {/* Main Content Container */}
+        <div className="w-full max-w-4xl mx-auto min-h-screen bg-card flex flex-col relative">
           {/* Notification Toast */}
           <AnimatePresence>
             {notification && (
@@ -388,8 +388,6 @@ export default function BituCalcApp() {
             )}
           </AnimatePresence>
 
-          {/* Notch for desktop view */}
-          <div className="hidden md:block absolute top-0 left-1/2 -translate-x-1/2 w-[120px] h-[24px] bg-primary rounded-b-[16px] z-50 no-print" />
 
           {/* Header */}
           <header className="px-6 pt-10 pb-4 no-print">
