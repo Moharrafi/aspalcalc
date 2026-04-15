@@ -245,122 +245,88 @@ export default function BituCalcApp() {
 
   return (
     <>
-      {/* --- Premium Print Report (Hidden natively via globals.css) --- */}
-      <div className="hidden print:block printable-area bg-white text-slate-900 p-12 font-sans">
-        {/* Professional Header */}
-        <div className="border-b-4 border-slate-900 pb-10 mb-12 flex justify-between items-start">
-          <div className="flex items-center gap-6">
-            <div className="p-4 bg-slate-900 rounded-2xl text-white">
-              <TrendingUp size={40} />
-            </div>
-            <div>
-              <h1 className="text-[48px] font-[1000] uppercase tracking-tighter text-slate-900 leading-none">
-                BITUCALC
-              </h1>
-              <p className="text-[14px] font-[800] uppercase tracking-[0.4em] text-slate-500 mt-2">
-                Sales & Profit Analytics
-              </p>
-            </div>
+      {/* --- Standard Business Print Report --- */}
+      <div className="hidden print:block printable-area bg-white text-black p-10 font-sans">
+        {/* Simple Header */}
+        <div className="border-b-2 border-black pb-4 mb-8 flex justify-between items-end">
+          <div>
+            <h1 className="text-3xl font-bold uppercase tracking-tight">Laporan Penjualan</h1>
+            <p className="text-sm font-medium text-gray-600 italic">Bitucalc Sales Analytics System</p>
           </div>
-          <div className="text-right">
-            <div className="bg-slate-50 px-6 py-4 rounded-2xl border-2 border-slate-100 mb-2">
-              <p className="text-[10px] font-[800] uppercase tracking-[0.2em] text-slate-400 mb-1">
-                Generated On
-              </p>
-              <p className="text-[16px] font-[900] text-slate-900">
-                {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-              </p>
-            </div>
-            <p className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-widest">
-              DOC-ID: #{new Date().getTime().toString().slice(-8)}
-            </p>
+          <div className="text-right text-xs">
+            <p>Tanggal Cetak: {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+            <p className="mt-1">Ref ID: #{new Date().getTime().toString().slice(-6)}</p>
           </div>
         </div>
 
-        {/* Financial Summary */}
-        <div className="grid grid-cols-3 gap-8 mb-16">
-          <div className="bg-slate-50 p-8 rounded-[32px] border-2 border-slate-100">
-            <p className="text-[11px] font-[900] uppercase tracking-[0.2em] text-slate-500 mb-3">Total Jual (Revenue)</p>
-            <p className="text-[32px] font-[1000] tracking-tighter text-slate-900">{formatCurrency(totalRevenue)}</p>
-          </div>
-          <div className="bg-slate-50 p-8 rounded-[32px] border-2 border-slate-100">
-            <p className="text-[11px] font-[900] uppercase tracking-[0.2em] text-slate-500 mb-3">Total Setor (Cost)</p>
-            <p className="text-[32px] font-[1000] tracking-tighter text-slate-900">{formatCurrency(totalCost)}</p>
-          </div>
-          <div className="bg-emerald-600 p-8 rounded-[32px] shadow-2xl shadow-emerald-200 !print:bg-emerald-600">
-            <p className="text-[11px] font-[900] uppercase tracking-[0.2em] text-emerald-100 mb-3 text-white">Total Fee (Profit)</p>
-            <p className="text-[36px] font-[1000] tracking-tighter text-white tabular-nums">{formatCurrency(totalProfit)}</p>
+        {/* Summary Table Style */}
+        <div className="mb-8">
+          <h2 className="text-xs font-bold uppercase tracking-widest mb-3 border-l-4 border-black pl-3 text-gray-700">Ringkasan Penjualan</h2>
+          <div className="grid grid-cols-3 border border-black divide-x divide-black">
+            <div className="p-4 bg-gray-50">
+              <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Total Jual</p>
+              <p className="text-xl font-bold">{formatCurrency(totalRevenue)}</p>
+            </div>
+            <div className="p-4 bg-gray-50">
+              <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Total Setor</p>
+              <p className="text-xl font-bold">{formatCurrency(totalCost)}</p>
+            </div>
+            <div className="p-4 bg-white">
+              <p className="text-[10px] uppercase font-bold text-emerald-700 mb-1">Total Fee (Profit)</p>
+              <p className="text-xl font-bold text-emerald-700 tabular-nums">{formatCurrency(totalProfit)}</p>
+            </div>
           </div>
         </div>
 
-        {/* Transaction History */}
-        <div className="mb-20">
-          <div className="flex items-center justify-between mb-6 px-2">
-            <h2 className="text-[16px] font-[1000] uppercase tracking-[0.3em] text-slate-400">Transaction Ledger</h2>
-            <p className="text-[12px] font-bold text-slate-400 uppercase">{sales.length} Recorded Entries</p>
-          </div>
-          
-          <div className="border-2 border-slate-900 rounded-[28px] overflow-hidden shadow-sm">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-900 border-b border-slate-900">
-                  <th className="py-6 px-8 text-[11px] font-[1000] uppercase tracking-[0.2em] text-slate-400">Date</th>
-                  <th className="py-6 px-8 text-[11px] font-[1000] uppercase tracking-[0.2em] text-slate-400">Description</th>
-                  <th className="py-6 px-8 text-[11px] font-[1000] uppercase tracking-[0.2em] text-slate-400 text-center">Qty</th>
-                  <th className="py-6 px-8 text-[11px] font-[1000] uppercase tracking-[0.2em] text-slate-400 text-right">Selling Price</th>
-                  <th className="py-6 px-8 text-[11px] font-[1000] uppercase tracking-[0.2em] text-emerald-400 text-right bg-emerald-950/20">Profit Fee</th>
+        {/* Transaction Table */}
+        <div>
+          <h2 className="text-xs font-bold uppercase tracking-widest mb-3 border-l-4 border-black pl-3 text-gray-700">Detail Transaksi</h2>
+          <table className="w-full border border-black border-collapse text-xs">
+            <thead>
+              <tr className="bg-gray-100 divide-x divide-black">
+                <th className="p-3 font-bold border-b border-black">Tanggal</th>
+                <th className="p-3 font-bold border-b border-black text-left">Deskripsi Produk</th>
+                <th className="p-3 font-bold border-b border-black text-center">Qty</th>
+                <th className="p-3 font-bold border-b border-black text-right">Harga Jual</th>
+                <th className="p-3 font-bold border-b border-black text-right bg-emerald-50">Fee (Profit)</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {sales.map((sale) => (
+                <tr key={sale.id} className="divide-x divide-black">
+                  <td className="p-3">{sale.date}</td>
+                  <td className="p-3">
+                    <span className="font-bold uppercase">{sale.type}</span> ({sale.weight}kg)
+                  </td>
+                  <td className="p-3 text-center font-bold">{sale.quantity}</td>
+                  <td className="p-3 text-right">{formatCurrency(sale.totalPrice)}</td>
+                  <td className="p-3 text-right font-bold text-emerald-700 bg-emerald-50/50">
+                    {formatCurrency(sale.totalPrice - sale.totalCost)}
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y-2 divide-slate-100">
-                {sales.map((sale) => (
-                  <tr key={sale.id} className="bg-white">
-                    <td className="py-5 px-8 text-[13px] font-bold text-slate-500">{sale.date}</td>
-                    <td className="py-5 px-8">
-                      <div className="flex items-center gap-3">
-                        <span className="text-[15px] font-[1000] text-slate-900 uppercase">{sale.type}</span>
-                        <span className="text-[10px] font-black text-slate-400 border border-slate-200 px-2 py-0.5 rounded-lg">{sale.weight}kg</span>
-                      </div>
-                    </td>
-                    <td className="py-5 px-8 text-[16px] text-center font-black text-slate-900 tabular-nums">{sale.quantity}</td>
-                    <td className="py-5 px-8 text-[15px] text-right font-[900] text-slate-900 tabular-nums">
-                      {formatCurrency(sale.totalPrice)}
-                    </td>
-                    <td className="py-5 px-8 text-[16px] text-right font-[1000] text-emerald-600 tabular-nums bg-emerald-50/40">
-                      {formatCurrency(sale.totalPrice - sale.totalCost)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className="bg-gray-100 font-bold border-t border-black divide-x divide-black">
+                <td colSpan={3} className="p-3 text-right uppercase">Total Seluruhnya:</td>
+                <td className="p-3 text-right">{formatCurrency(totalRevenue)}</td>
+                <td className="p-3 text-right text-emerald-700">{formatCurrency(totalProfit)}</td>
+              </tr>
+            </tfoot>
+          </table>
         </div>
 
-        {/* Official Signatures */}
-        <div className="mt-auto grid grid-cols-2 gap-40 px-8 pt-10 border-t-4 border-slate-100">
-          <div className="max-w-[350px]">
-            <p className="text-[11px] font-black text-slate-900 uppercase tracking-widest mb-3">Compliance Statement</p>
-            <p className="text-[10px] text-slate-400 font-bold leading-relaxed uppercase tracking-wider">
-              This financial report is automatically generated and verified. Any unauthorized modification is prohibited and may invalidate the record.
-            </p>
-            <div className="mt-8 flex items-center gap-4">
-              <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center text-slate-300">
-                <CheckCircle2 size={24} />
-              </div>
-              <p className="text-[9px] font-mono text-slate-300">BITUCALC DIGITAL VERIFICATION ACTIVE</p>
-            </div>
+        {/* Standard Signatures */}
+        <div className="mt-20 flex justify-end gap-24 px-4 text-xs">
+          <div className="text-center">
+            <p className="mb-20">Diterima Oleh,</p>
+            <div className="border-b border-black w-40 mb-1"></div>
+            <p>( ................................ )</p>
           </div>
-          
-          <div className="grid grid-cols-2 gap-20">
-            <div className="text-center">
-              <p className="text-[11px] font-black text-slate-400 mb-28 uppercase tracking-[0.2em]">Prepared By</p>
-              <div className="border-b-4 border-slate-900 w-full mb-3"></div>
-              <p className="text-[14px] font-black text-slate-900 uppercase tracking-tighter">Inventory Audit</p>
-            </div>
-            <div className="text-center">
-              <p className="text-[11px] font-black text-slate-400 mb-28 uppercase tracking-[0.2em]">Verified By</p>
-              <div className="border-b-4 border-slate-900 w-full mb-3"></div>
-              <p className="text-[14px] font-black text-slate-900 uppercase tracking-tighter">Finance Dept</p>
-            </div>
+          <div className="text-center font-bold">
+            <p className="mb-20">Hormat Kami,</p>
+            <div className="border-b border-black w-40 mb-1"></div>
+            <p>Admin Bitucalc</p>
           </div>
         </div>
       </div>
