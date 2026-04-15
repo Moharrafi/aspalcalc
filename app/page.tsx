@@ -135,7 +135,12 @@ export default function BituCalcApp() {
 
   // Analysis State
   const [statPeriod, setStatPeriod] = useState<'daily' | 'monthly'>('daily');
+  const [mounted, setMounted] = useState(false);
 
+  useEffect(() => {
+    setMounted(true);
+    fetchSales();
+  }, []);
   const fetchSales = async () => {
     setIsLoading(true);
     try {
@@ -147,8 +152,8 @@ export default function BituCalcApp() {
         ...s,
         weight: Number(s.weight),
         totalPrice: Number(s.totalPrice),
-        totalCost: Number(s.totalCost),
-        quantity: Number(s.quantity)
+        totalCost: Number(s.totalCost) || 0,
+        quantity: Number(s.quantity) || 1
       }));
 
       setSales(formattedData);
@@ -159,10 +164,6 @@ export default function BituCalcApp() {
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchSales();
-  }, []);
 
   const filteredSales = useMemo(() => {
     if (!filterDate) return sales;
@@ -247,6 +248,8 @@ export default function BituCalcApp() {
   }, [sales, statPeriod]);
 
   const COLORS = ['#F97316', '#10B981', '#000000'];
+
+  if (!mounted) return null;
 
   return (
     <div className="h-screen h-[100dvh] bg-card flex flex-col relative overflow-hidden">
