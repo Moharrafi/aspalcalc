@@ -373,7 +373,7 @@ export default function BituCalcApp() {
                 initial={{ y: -100, opacity: 0 }}
                 animate={{ y: 20, opacity: 1 }}
                 exit={{ y: -100, opacity: 0 }}
-                className="absolute top-0 left-4 right-4 z-[100] no-print"
+                className="fixed top-5 left-1/2 -translate-x-1/2 w-full max-w-md px-4 z-[100] no-print"
               >
                 <div className={cn(
                   "flex items-center gap-3 p-4 rounded-[20px] shadow-2xl border",
