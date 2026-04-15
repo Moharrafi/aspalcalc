@@ -204,7 +204,7 @@ export default function BituCalcApp() {
       setSales([newSale, ...sales]);
       setQuantity(1);
       if (weight === 0) setCustomWeight('');
-      setNotification({ message: 'Penjualan berhasil disimpan ke Database!', type: 'success' });
+      setNotification({ message: 'Data berhasil di simpan', type: 'success' });
     } catch (error) {
       setNotification({ message: 'Gagal mencatat penjualan ke database.', type: 'error' });
     }
@@ -219,7 +219,7 @@ export default function BituCalcApp() {
       if (!response.ok) throw new Error();
       
       setSales(sales.filter(s => s.id !== id));
-      setNotification({ message: 'Data dihapus dari database.', type: 'success' });
+      setNotification({ message: 'Data berhasil di hapus', type: 'success' });
     } catch (error) {
       setNotification({ message: 'Gagal menghapus data.', type: 'error' });
     }
