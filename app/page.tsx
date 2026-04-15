@@ -273,7 +273,7 @@ export default function BituCalcApp() {
     }));
   }, [sales, statPeriod]);
 
-  const COLORS = ['#111827', '#10B981', '#6B7280'];
+  const COLORS = ['#F97316', '#10B981', '#000000'];
 
   return (
     <>
