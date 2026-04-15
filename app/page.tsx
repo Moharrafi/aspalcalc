@@ -871,26 +871,26 @@ export default function BituCalcApp() {
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative bg-white w-full max-w-sm rounded-[32px] p-8 shadow-2xl overflow-hidden"
+              className="relative bg-white w-full max-w-[320px] rounded-[24px] p-6 shadow-2xl overflow-hidden"
             >
               <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-6">
-                  <AlertTriangle className="text-red-500" size={32} />
+                <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mb-4">
+                  <AlertTriangle className="text-red-500" size={24} />
                 </div>
-                <h3 className="text-[20px] font-bold text-primary mb-2">Hapus Data?</h3>
-                <p className="text-secondary text-[14px] leading-relaxed mb-8">
+                <h3 className="text-[18px] font-bold text-primary mb-1">Hapus Data?</h3>
+                <p className="text-secondary text-[13px] leading-relaxed mb-6">
                   Apakah Anda yakin ingin menghapus data penjualan ini? Tindakan ini tidak dapat dibatalkan.
                 </p>
                 <div className="grid grid-cols-2 gap-3 w-full">
                   <button
                     onClick={() => setDeleteConfirmId(null)}
-                    className="py-4 rounded-[16px] border border-border font-bold text-secondary hover:bg-bg transition-colors"
+                    className="py-3 rounded-[12px] border border-border font-bold text-secondary hover:bg-bg transition-colors text-[13px]"
                   >
                     Batal
                   </button>
                   <button
                     onClick={() => handleDeleteSale(deleteConfirmId)}
-                    className="py-4 rounded-[16px] bg-red-500 text-white font-bold hover:bg-red-600 transition-colors shadow-lg shadow-red-200"
+                    className="py-3 rounded-[12px] bg-red-500 text-white font-bold hover:bg-red-600 transition-colors shadow-lg shadow-red-200 text-[13px]"
                   >
                     Hapus
                   </button>
