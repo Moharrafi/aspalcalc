@@ -1,20 +1,62 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# 🏗️ AspalCalc: Sales & Analysis System
 
-# Run and deploy your AI Studio app
+AspalCalc (formerly BituCalc) is a premium, mobile-first application designed to streamline the sales and analysis of asphalt products including **Bitumax**, **Hijau**, and **Hitam**. Built with modern technologies, it offers a native-app experience directly from your browser.
 
-This contains everything you need to run your app locally.
+## 🚀 Key Features
 
-View your app in AI Studio: https://ai.studio/apps/1f8dcc6c-c94f-4763-91b1-9e3e825875a4
+- **📱 Mobile-First Experience**: Designed specifically for field use with a clean, premium interface.
+- **🔢 Smart Calculator**: Real-time sales calculations with support for custom weights and automatic bulk discount logic.
+- **📊 Sales Analytics**: 
+  - Daily & Monthly revenue timelines.
+  - Interactive product distribution charts.
+  - Quick summary of Revenue, Cost, and Profit (Fee).
+- **📝 Formal Reports**: Generate professional sales reports ready for print or PDF.
+- **☁️ Cloud Database**: Fully integrated with MySQL (Aiven Cloud) for reliable and persistend data storage.
+- **📲 PWA Support**: Install directly to Android (Chrome) or iOS (Safari) home screens.
+- **🔔 Pro Feedback**: Custom slide-down notifications and premium confirmation modals.
 
-## Run Locally
+## 🛠️ Tech Stack
 
-**Prerequisites:**  Node.js
+- **Framework**: Next.js 14+ (App Router)
+- **Styling**: Tailwind CSS & Framer Motion
+- **Icons**: Lucide React
+- **Database**: MySQL (mysql2)
+- **Charts**: Recharts
 
+## ⚙️ Setup Instructions
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### 1. Clone the repository
+```bash
+git clone https://github.com/Moharrafi/aspalcalc.git
+cd aspalcalc
+```
+
+### 2. Configure Environment Variables
+Copy `.env.example` to `.env` and fill in your MySQL credentials:
+```bash
+cp .env.example .env
+```
+
+### 3. Install Dependencies
+```bash
+pnpm install
+```
+
+### 4. Initialize Database
+Run the script to create the necessary tables in your MySQL database:
+```bash
+node scratch/init_db.js
+```
+
+### 5. Run Development Server
+```bash
+pnpm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## 📄 License
+This project is for internal sales management and distribution monitoring.
+
+---
+Built with ❤️ by Moharrafi
