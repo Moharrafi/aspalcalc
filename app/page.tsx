@@ -211,6 +211,7 @@ export default function BituCalcApp() {
   };
 
   const handleDeleteSale = async (id: string) => {
+    if (!window.confirm('Apakah Anda yakin ingin menghapus data ini secara permanen?')) return;
     try {
       const response = await fetch(`/api/sales?id=${id}`, {
         method: 'DELETE'
