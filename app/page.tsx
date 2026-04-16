@@ -418,16 +418,16 @@ export default function BituCalcApp() {
                 >
                   {/* Summary Card */}
                   <div className="bg-primary text-white p-6 rounded-[24px] mb-6">
-                    <p className="text-secondary text-[10px] font-bold uppercase tracking-wider">Total Bagian (Fee)</p>
-                    <h2 className="text-[28px] font-bold tracking-tight">{formatCurrency(totalProfit)}</h2>
+                    <p className="text-success text-[10px] font-bold uppercase tracking-wider">Total Fee</p>
+                    <h2 className="text-[28px] font-bold tracking-tight text-success">{formatCurrency(totalProfit)}</h2>
                     <div className="mt-4 flex items-center justify-between text-[11px]">
                       <div className="flex flex-col">
                         <span className="text-secondary uppercase font-bold">Total Jual</span>
                         <span className="font-medium">{formatCurrency(totalRevenue)}</span>
                       </div>
                       <div className="flex flex-col text-right">
-                        <span className="text-success uppercase font-bold">Total Fee</span>
-                        <span className="font-medium text-success">{formatCurrency(totalCost)}</span>
+                        <span className="text-secondary uppercase font-bold">Total Setor</span>
+                        <span className="font-medium">{formatCurrency(totalCost)}</span>
                       </div>
                     </div>
                   </div>
@@ -631,16 +631,16 @@ export default function BituCalcApp() {
                   </div>
 
                   <div className="bg-primary text-white p-6 rounded-[24px]">
-                    <p className="text-secondary text-[10px] font-bold uppercase tracking-wider">Total Bagian (Fee)</p>
-                    <h2 className="text-[28px] font-bold tracking-tight">{formatCurrency(totalProfit)}</h2>
+                    <p className="text-success text-[10px] font-bold uppercase tracking-wider">Total Fee</p>
+                    <h2 className="text-[28px] font-bold tracking-tight text-success">{formatCurrency(totalProfit)}</h2>
                     <div className="mt-4 grid grid-cols-2 gap-4 text-[11px]">
                       <div className="bg-white/5 p-3 rounded-[16px]">
                         <span className="text-secondary uppercase font-bold block mb-1">Total Jual</span>
                         <span className="font-medium text-[14px]">{formatCurrency(totalRevenue)}</span>
                       </div>
                       <div className="bg-white/5 p-3 rounded-[16px]">
-                        <span className="text-success uppercase font-bold block mb-1">Total Fee</span>
-                        <span className="font-medium text-[14px] text-success">{formatCurrency(totalCost)}</span>
+                        <span className="text-secondary uppercase font-bold block mb-1">Total Setor</span>
+                        <span className="font-medium text-[14px]">{formatCurrency(totalCost)}</span>
                       </div>
                     </div>
                   </div>
