@@ -426,8 +426,8 @@ export default function BituCalcApp() {
                         <span className="font-medium">{formatCurrency(totalRevenue)}</span>
                       </div>
                       <div className="flex flex-col text-right">
-                        <span className="text-secondary uppercase font-bold">Total Setor</span>
-                        <span className="font-medium">{formatCurrency(totalCost)}</span>
+                        <span className="text-success uppercase font-bold">Total Fee</span>
+                        <span className="font-medium text-success">{formatCurrency(totalCost)}</span>
                       </div>
                     </div>
                   </div>
@@ -639,8 +639,8 @@ export default function BituCalcApp() {
                         <span className="font-medium text-[14px]">{formatCurrency(totalRevenue)}</span>
                       </div>
                       <div className="bg-white/5 p-3 rounded-[16px]">
-                        <span className="text-secondary uppercase font-bold block mb-1">Total Setor</span>
-                        <span className="font-medium text-[14px]">{formatCurrency(totalCost)}</span>
+                        <span className="text-success uppercase font-bold block mb-1">Total Fee</span>
+                        <span className="font-medium text-[14px] text-success">{formatCurrency(totalCost)}</span>
                       </div>
                     </div>
                   </div>
