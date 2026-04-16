@@ -123,10 +123,11 @@ const calculatePricing = (type: ProductType, weight: number): { price: number; c
 export default function BituCalcApp() {
   const [sales, setSales] = useState<Sale[]>([]);
   const [isMounted, setIsMounted] = useState(false);
-  
+
   // Fetch from DB
   useEffect(() => {
     setIsMounted(true);
+    setSaleDate(new Date().toISOString().split('T')[0]);
     const fetchSales = async () => {
       try {
         const response = await fetch('/api/sales');
@@ -148,6 +149,7 @@ export default function BituCalcApp() {
   const [weight, setWeight] = useState<number>(1);
   const [customWeight, setCustomWeight] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(1);
+  const [saleDate, setSaleDate] = useState<string>('');
 
   // Analysis State
   const [statPeriod, setStatPeriod] = useState<'daily' | 'monthly'>('daily');
@@ -185,7 +187,7 @@ export default function BituCalcApp() {
     const pricing = calculatePricing(selectedType, effectiveWeight);
     const newSale: Sale = {
       id: Math.random().toString(36).substring(7),
-      date: new Date().toISOString().split('T')[0],
+      date: saleDate || new Date().toISOString().split('T')[0],
       type: selectedType,
       weight: effectiveWeight,
       quantity,
@@ -495,21 +497,37 @@ export default function BituCalcApp() {
                     </motion.div>
                   )}
 
-                  <span className="section-label">Quantity</span>
-                  <div className="flex items-center justify-between bg-bg p-2 rounded-[16px]">
-                    <button
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="w-8 h-8 rounded-[8px] bg-white border border-border flex items-center justify-center font-bold"
-                    >
-                      −
-                    </button>
-                    <div className="font-bold text-[14px]">{quantity} Units</div>
-                    <button
-                      onClick={() => setQuantity(quantity + 1)}
-                      className="w-8 h-8 rounded-[8px] bg-white border border-border flex items-center justify-center font-bold"
-                    >
-                      +
-                    </button>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <span className="section-label">Tanggal Transaksi</span>
+                      <div className="bg-bg px-1 py-2 rounded-[16px] flex items-center gap-2 border border-border h-[48px]">
+                        <Calendar size={16} className="text-secondary shrink-0" />
+                        <input
+                          type="date"
+                          value={saleDate}
+                          onChange={(e) => setSaleDate(e.target.value)}
+                          className="w-full bg-transparent text-[13px] font-[600] focus:outline-none pr-1"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <span className="section-label">Quantity</span>
+                      <div className="flex items-center justify-between bg-bg p-2 rounded-[16px] border border-border h-[48px]">
+                        <button
+                          onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                          className="w-8 h-8 rounded-[8px] bg-white border border-border flex items-center justify-center font-bold"
+                        >
+                          −
+                        </button>
+                        <div className="font-bold text-[14px]">{quantity}</div>
+                        <button
+                          onClick={() => setQuantity(quantity + 1)}
+                          className="w-8 h-8 rounded-[8px] bg-white border border-border flex items-center justify-center font-bold"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="analysis-card mt-6">
