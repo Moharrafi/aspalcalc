@@ -153,6 +153,8 @@ export default function BituCalcApp() {
 
   // Analysis State
   const [statPeriod, setStatPeriod] = useState<'daily' | 'monthly'>('daily');
+  const [printingMonth, setPrintingMonth] = useState<string | null>(null);
+  const [analysisMonth, setAnalysisMonth] = useState<string>('');
 
   // Notification State
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -235,29 +237,67 @@ export default function BituCalcApp() {
     }
   };
 
-  const handlePrint = () => {
-    window.print();
+  const handlePrint = (month?: string) => {
+    if (month) {
+      setPrintingMonth(month);
+      // Wait for React to update the printable area with filtered data
+      setTimeout(() => {
+        window.print();
+        setPrintingMonth(null);
+      }, 150);
+    } else {
+      window.print();
+    }
   };
 
+  const salesToPrint = useMemo(() => {
+    if (!printingMonth) return sales;
+    // printingMonth could be YYYY-MM (monthly) or YYYY-MM-DD (daily)
+    return sales.filter(s => s.date.startsWith(printingMonth));
+  }, [sales, printingMonth]);
+
+  const printSummary = useMemo(() => {
+    const revenue = salesToPrint.reduce((acc, s) => acc + (Number(s.totalPrice) || 0), 0);
+    const cost = salesToPrint.reduce((acc, s) => acc + (Number(s.totalCost) || 0), 0);
+    return {
+      revenue,
+      cost,
+      profit: revenue - cost
+    };
+  }, [salesToPrint]);
+
   // --- Analysis Computations ---
+
+  const analysisSales = useMemo(() => {
+    if (!analysisMonth) return sales;
+    return sales.filter(s => s.date.startsWith(analysisMonth));
+  }, [sales, analysisMonth]);
 
   const totalRevenue = useMemo(() => sales.reduce((acc, s) => acc + (Number(s.totalPrice) || 0), 0), [sales]);
   const totalCost = useMemo(() => sales.reduce((acc, s) => acc + (Number(s.totalCost) || 0), 0), [sales]);
   const totalProfit = useMemo(() => totalRevenue - totalCost, [totalRevenue, totalCost]);
-  const totalWeight = useMemo(() => sales.reduce((acc, s) => acc + ((Number(s.weight) || 0) * (Number(s.quantity) || 0)), 0), [sales]);
+  // const totalWeight = useMemo(() => sales.reduce((acc, s) => acc + ((Number(s.weight) || 0) * (Number(s.quantity) || 0)), 0), [sales]);
+
+  const analysisStats = useMemo(() => {
+    const rev = analysisSales.reduce((acc, s) => acc + (Number(s.totalPrice) || 0), 0);
+    const cost = analysisSales.reduce((acc, s) => acc + (Number(s.totalCost) || 0), 0);
+    return { revenue: rev, cost, profit: rev - cost };
+  }, [analysisSales]);
 
   const salesByType = useMemo(() => {
     const data: Record<string, number> = { bitumax: 0, hijau: 0, hitam: 0 };
-    sales.forEach(s => {
-      data[s.type] += (Number(s.totalPrice) || 0);
+    analysisSales.forEach(s => {
+      if (data.hasOwnProperty(s.type)) {
+        data[s.type] += (Number(s.totalPrice) || 0);
+      }
     });
     return Object.entries(data).map(([name, value]) => ({ name, value }));
-  }, [sales]);
+  }, [analysisSales]);
 
   const salesByPeriod = useMemo(() => {
     const data: Record<string, { revenue: number; cost: number; fee: number; weight: number; count: number }> = {};
 
-    [...sales].reverse().forEach(s => {
+    [...analysisSales].reverse().forEach(s => {
       const dateOnly = s.date.split('T')[0];
       const key = statPeriod === 'daily'
         ? dateOnly
@@ -276,12 +316,12 @@ export default function BituCalcApp() {
 
     return Object.entries(data).map(([period, stats]) => ({
       period: statPeriod === 'daily'
-        ? period.split('-').slice(1).join('/')
+        ? period.split('-').slice(1).reverse().join('/') // DD/MM
         : new Date(period + '-01').toLocaleDateString('id-ID', { month: 'short', year: 'numeric' }),
       fullPeriod: period,
       ...stats
-    }));
-  }, [sales, statPeriod]);
+    })).sort((a, b) => a.fullPeriod.localeCompare(b.fullPeriod));
+  }, [analysisSales, statPeriod]);
 
   const COLORS = ['#F97316', '#10B981', '#000000'];
 
@@ -303,19 +343,23 @@ export default function BituCalcApp() {
 
         {/* Summary Table Style */}
         <div className="mb-8">
-          <h2 className="text-xs font-bold uppercase tracking-widest mb-3 border-l-4 border-black pl-3 text-gray-700">Ringkasan Penjualan</h2>
+          <h2 className="text-xs font-bold uppercase tracking-widest mb-3 border-l-4 border-black pl-3 text-gray-700">
+            Ringkasan Penjualan {printingMonth ? `(Periode: ${printingMonth.length > 7 
+              ? new Date(printingMonth).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+              : new Date(printingMonth + '-01').toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })})` : ''}
+          </h2>
           <div className="grid grid-cols-3 border border-black divide-x divide-black">
             <div className="p-4 bg-gray-50">
               <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Total Jual</p>
-              <p className="text-xl font-bold">{formatCurrency(totalRevenue)}</p>
+              <p className="text-xl font-bold">{formatCurrency(printSummary.revenue)}</p>
             </div>
             <div className="p-4 bg-gray-50">
               <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Total Setor</p>
-              <p className="text-xl font-bold">{formatCurrency(totalCost)}</p>
+              <p className="text-xl font-bold">{formatCurrency(printSummary.cost)}</p>
             </div>
             <div className="p-4 bg-white">
               <p className="text-[10px] uppercase font-bold text-emerald-700 mb-1">Total Fee (Profit)</p>
-              <p className="text-xl font-bold text-emerald-700 tabular-nums">{formatCurrency(totalProfit)}</p>
+              <p className="text-xl font-bold text-emerald-700 tabular-nums">{formatCurrency(printSummary.profit)}</p>
             </div>
           </div>
         </div>
@@ -334,7 +378,7 @@ export default function BituCalcApp() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {sales.map((sale) => (
+              {salesToPrint.map((sale) => (
                 <tr key={sale.id} className="divide-x divide-black">
                   <td className="p-3">{new Date(sale.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</td>
                   <td className="p-3">
@@ -351,8 +395,8 @@ export default function BituCalcApp() {
             <tfoot>
               <tr className="bg-gray-100 font-bold border-t border-black divide-x divide-black">
                 <td colSpan={3} className="p-3 text-right uppercase">Total Seluruhnya:</td>
-                <td className="p-3 text-right">{formatCurrency(totalRevenue)}</td>
-                <td className="p-3 text-right text-emerald-700">{formatCurrency(totalProfit)}</td>
+                <td className="p-3 text-right">{formatCurrency(printSummary.revenue)}</td>
+                <td className="p-3 text-right text-emerald-700">{formatCurrency(printSummary.profit)}</td>
               </tr>
             </tfoot>
           </table>
@@ -621,26 +665,33 @@ export default function BituCalcApp() {
                         Monthly
                       </button>
                     </div>
+                    <div className="bg-bg px-3 py-1 rounded-[16px] border border-border flex items-center gap-2">
+                      <Calendar size={14} className="text-secondary" />
+                      <input
+                        type="month"
+                        value={analysisMonth}
+                        onChange={(e) => setAnalysisMonth(e.target.value)}
+                        className="bg-transparent text-[11px] font-bold focus:outline-none w-24"
+                      />
+                    </div>
                     <button
-                      onClick={handlePrint}
+                      onClick={() => handlePrint(analysisMonth || undefined)}
                       className="bg-primary text-white p-3 rounded-[16px] hover:opacity-90 transition-opacity flex items-center justify-center"
                       title="Print Report"
                     >
                       <Printer size={20} />
                     </button>
-                  </div>
-
-                  <div className="bg-primary text-white p-6 rounded-[24px]">
-                    <p className="text-success text-[10px] font-bold uppercase tracking-wider">Total Fee</p>
-                    <h2 className="text-[28px] font-bold tracking-tight text-success">{formatCurrency(totalProfit)}</h2>
+                  </div>                   <div className="bg-primary text-white p-6 rounded-[24px]">
+                    <p className="text-success text-[10px] font-bold uppercase tracking-wider">Total Fee {analysisMonth ? `(${new Date(analysisMonth + '-01').toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })})` : ''}</p>
+                    <h2 className="text-[28px] font-bold tracking-tight text-success">{formatCurrency(analysisStats.profit)}</h2>
                     <div className="mt-4 grid grid-cols-2 gap-4 text-[11px]">
                       <div className="bg-white/5 p-3 rounded-[16px]">
                         <span className="text-secondary uppercase font-bold block mb-1">Total Jual</span>
-                        <span className="font-medium text-[14px]">{formatCurrency(totalRevenue)}</span>
+                        <span className="font-medium text-[14px]">{formatCurrency(analysisStats.revenue)}</span>
                       </div>
                       <div className="bg-white/5 p-3 rounded-[16px]">
                         <span className="text-secondary uppercase font-bold block mb-1">Total Setor</span>
-                        <span className="font-medium text-[14px]">{formatCurrency(totalCost)}</span>
+                        <span className="font-medium text-[14px]">{formatCurrency(analysisStats.cost)}</span>
                       </div>
                     </div>
                   </div>
@@ -715,9 +766,18 @@ export default function BituCalcApp() {
                         <div key={item.fullPeriod} className="bg-bg p-4 rounded-[20px] border border-border">
                           <div className="flex justify-between items-center mb-3">
                             <span className="text-[14px] font-[800]">{item.period}</span>
-                            <span className="text-[10px] font-bold text-secondary uppercase bg-white px-2 py-1 rounded-full border border-border">
-                              {item.count} Trans
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handlePrint(item.fullPeriod)}
+                                className="p-1.5 rounded-full hover:bg-white transition-colors text-primary border border-transparent hover:border-border"
+                                title={`Print ${statPeriod === 'monthly' ? 'Monthly' : 'Daily'} Report`}
+                              >
+                                <Printer size={14} />
+                              </button>
+                              <span className="text-[10px] font-bold text-secondary uppercase bg-white px-2 py-1 rounded-full border border-border">
+                                {item.count} Trans
+                              </span>
+                            </div>
                           </div>
                           <div className="grid grid-cols-3 gap-2">
                             <div className="flex flex-col">
@@ -763,7 +823,7 @@ export default function BituCalcApp() {
                       </ResponsiveContainer>
                       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                         <span className="text-[10px] uppercase font-bold text-secondary">Total</span>
-                        <span className="text-[14px] font-bold text-primary">{formatCurrency(totalRevenue).split(',')[0]}</span>
+                        <span className="text-[14px] font-bold text-primary">{formatCurrency(analysisStats.revenue).split(',')[0]}</span>
                       </div>
                     </div>
                     <div className="flex justify-center gap-4 mt-2">

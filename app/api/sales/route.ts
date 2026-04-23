@@ -3,7 +3,7 @@ import pool from '@/lib/db';
 
 export async function GET() {
   try {
-    const [rows] = await pool.query('SELECT * FROM sales ORDER BY date DESC, createdAt DESC');
+    const [rows] = await pool.query(`SELECT id, DATE_FORMAT(date, '%Y-%m-%d') as date, type, weight, quantity, totalPrice, totalCost, createdAt FROM sales ORDER BY date DESC, createdAt DESC`);
     return NextResponse.json(rows);
   } catch (error: any) {
     console.error('Database error:', error);
