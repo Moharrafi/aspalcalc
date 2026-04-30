@@ -333,7 +333,7 @@ export default function BituCalcApp() {
         <div className="border-b-2 border-black pb-4 mb-8 flex justify-between items-end">
           <div>
             <h1 className="text-3xl font-bold uppercase tracking-tight">Laporan Penjualan</h1>
-            <p className="text-sm font-medium text-gray-600 italic">Bitucalc Sales Analytics System</p>
+            <p className="text-sm font-medium text-gray-600 italic">Aspal Sales Analytics System</p>
           </div>
           <div className="text-right text-xs">
             <p>Tanggal Cetak: {isMounted ? new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : ''}</p>
@@ -344,7 +344,7 @@ export default function BituCalcApp() {
         {/* Summary Table Style */}
         <div className="mb-8">
           <h2 className="text-xs font-bold uppercase tracking-widest mb-3 border-l-4 border-black pl-3 text-gray-700">
-            Ringkasan Penjualan {printingMonth ? `(Periode: ${printingMonth.length > 7 
+            Ringkasan Penjualan {printingMonth ? `(Periode: ${printingMonth.length > 7
               ? new Date(printingMonth).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
               : new Date(printingMonth + '-01').toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })})` : ''}
           </h2>
@@ -412,7 +412,7 @@ export default function BituCalcApp() {
           <div className="text-center font-bold">
             <p className="mb-20">Hormat Kami,</p>
             <div className="border-b border-black w-40 mb-1"></div>
-            <p>Admin Aspal</p>
+            <p>Rafi</p>
           </div>
         </div>
       </div>
@@ -447,7 +447,7 @@ export default function BituCalcApp() {
           {/* Header */}
           <header className="px-6 pt-6 pb-4 no-print">
             <h1 className="text-[24px] font-[800] tracking-[-0.5px] text-primary">Sales Calc</h1>
-            <p className="text-[14px] text-secondary mt-1">Bitumax Distribution App</p>
+            <p className="text-[14px] text-secondary mt-1">Aspal Distribution App</p>
           </header>
 
           <div className="flex-1 overflow-y-auto no-scrollbar px-6 pb-24">

@@ -5,7 +5,7 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'BituCalc - Sales & Analysis',
+  title: 'Aspal - Sales & Analysis',
   description: 'Mobile-friendly sales calculator and analysis tool.',
   manifest: '/manifest.json',
   appleWebApp: {
