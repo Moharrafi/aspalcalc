@@ -155,10 +155,24 @@ export default function BituCalcApp() {
   const [statPeriod, setStatPeriod] = useState<'daily' | 'monthly'>('daily');
   const [printingMonth, setPrintingMonth] = useState<string | null>(null);
   const [analysisMonth, setAnalysisMonth] = useState<string>('');
+  const [historyCollapsed, setHistoryCollapsed] = useState(false);
 
   // Notification State
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const savedState = typeof window !== 'undefined' ? window.localStorage.getItem('bitucalc.historyCollapsed') : null;
+    if (savedState !== null) {
+      setHistoryCollapsed(savedState === 'true');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('bitucalc.historyCollapsed', String(historyCollapsed));
+    }
+  }, [historyCollapsed]);
 
   useEffect(() => {
     if (notification) {
@@ -477,7 +491,7 @@ export default function BituCalcApp() {
                   </div>
                   <span className="section-label">Type</span>
                   <div className="flex gap-2 flex-wrap">
-                    {(['bitumax', 'hijau', 'hitam'] as ProductType[]).map((type) => (
+                    {(['hitam', 'hijau', 'bitumax'] as ProductType[]).map((type) => (
                       <button
                         key={type}
                         onClick={() => setSelectedType(type)}
@@ -732,74 +746,10 @@ export default function BituCalcApp() {
                     </div>
                   </div>
 
-                  {/* Timeline History */}
-                  <div className="space-y-4">
-                    <span className="section-label">Timeline History</span>
-
-                    {/* Print-only Table */}
-                    <table className="hidden print:table print-table">
-                      <thead>
-                        <tr>
-                          <th>Period</th>
-                          <th>Transactions</th>
-                          <th>Revenue</th>
-                          <th>Deposit</th>
-                          <th>Fee (Profit)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {[...salesByPeriod].reverse().map((item) => (
-                          <tr key={item.fullPeriod}>
-                            <td>{item.period}</td>
-                            <td>{item.count}</td>
-                            <td>{formatCurrency(item.revenue)}</td>
-                            <td>{formatCurrency(item.cost)}</td>
-                            <td className="text-success font-bold">{formatCurrency(item.fee)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-
-                    {/* Screen-only Timeline Cards */}
-                    <div className="print:hidden space-y-4">
-                      {[...salesByPeriod].reverse().map((item) => (
-                        <div key={item.fullPeriod} className="bg-bg p-4 rounded-[20px] border border-border">
-                          <div className="flex justify-between items-center mb-3">
-                            <span className="text-[14px] font-[800]">{item.period}</span>
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => handlePrint(item.fullPeriod)}
-                                className="p-1.5 rounded-full hover:bg-white transition-colors text-primary border border-transparent hover:border-border"
-                                title={`Print ${statPeriod === 'monthly' ? 'Monthly' : 'Daily'} Report`}
-                              >
-                                <Printer size={14} />
-                              </button>
-                              <span className="text-[10px] font-bold text-secondary uppercase bg-white px-2 py-1 rounded-full border border-border">
-                                {item.count} Trans
-                              </span>
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-3 gap-2">
-                            <div className="flex flex-col">
-                              <span className="text-[9px] uppercase font-bold text-secondary">Revenue</span>
-                              <span className="text-[12px] font-bold">{formatCurrency(item.revenue)}</span>
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-[9px] uppercase font-bold text-secondary">Setor</span>
-                              <span className="text-[12px] font-bold">{formatCurrency(item.cost)}</span>
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-[9px] uppercase font-bold text-secondary">Fee</span>
-                              <span className="text-[12px] font-bold text-success">{formatCurrency(item.fee)}</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
                   <div className="analysis-card">
-                    <h3 className="text-[12px] font-bold uppercase text-secondary mb-4">Product Distribution</h3>
+                    <div className="flex items-center justify-between mb-4 gap-3">
+                      <h3 className="text-[12px] font-bold uppercase text-secondary">Product Distribution</h3>
+                    </div>
                     <div className="h-56 w-full relative">
                       <ResponsiveContainer width="100%" height="100%">
                         <RePieChart>
@@ -834,6 +784,86 @@ export default function BituCalcApp() {
                         </div>
                       ))}
                     </div>
+                  </div>
+
+                  <div className="analysis-card">
+                    <div className="flex items-start justify-between gap-3 mb-4">
+                      <div>
+                        <h3 className="text-[12px] font-bold uppercase text-secondary">Timeline History</h3>
+                        <p className="text-[11px] text-secondary mt-1">Ringkasan history penjualan per {statPeriod}.</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setHistoryCollapsed((value) => !value)}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-border bg-bg px-3 py-2 text-[10px] font-bold uppercase text-secondary transition hover:bg-white"
+                      >
+                        <span>{historyCollapsed ? 'Expand' : 'Minimize'}</span>
+                        <ChevronRight className={cn('transition-transform duration-200', historyCollapsed ? '' : 'rotate-90')} size={14} />
+                      </button>
+                    </div>
+
+                    {!historyCollapsed && (
+                      <div className="space-y-4">
+                        <table className="hidden print:table print-table">
+                          <thead>
+                            <tr>
+                              <th>Period</th>
+                              <th>Transactions</th>
+                              <th>Revenue</th>
+                              <th>Deposit</th>
+                              <th>Fee (Profit)</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {[...salesByPeriod].reverse().map((item) => (
+                              <tr key={item.fullPeriod}>
+                                <td>{item.period}</td>
+                                <td>{item.count}</td>
+                                <td>{formatCurrency(item.revenue)}</td>
+                                <td>{formatCurrency(item.cost)}</td>
+                                <td className="text-success font-bold">{formatCurrency(item.fee)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+
+                        <div className="print:hidden space-y-4">
+                          {[...salesByPeriod].reverse().map((item) => (
+                            <div key={item.fullPeriod} className="bg-bg p-4 rounded-[20px] border border-border">
+                              <div className="flex justify-between items-center mb-3">
+                                <span className="text-[14px] font-[800]">{item.period}</span>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={() => handlePrint(item.fullPeriod)}
+                                    className="p-1.5 rounded-full hover:bg-white transition-colors text-primary border border-transparent hover:border-border"
+                                    title={`Print ${statPeriod === 'monthly' ? 'Monthly' : 'Daily'} Report`}
+                                  >
+                                    <Printer size={14} />
+                                  </button>
+                                  <span className="text-[10px] font-bold text-secondary uppercase bg-white px-2 py-1 rounded-full border border-border">
+                                    {item.count} Trans
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-3 gap-2">
+                                <div className="flex flex-col">
+                                  <span className="text-[9px] uppercase font-bold text-secondary">Revenue</span>
+                                  <span className="text-[12px] font-bold">{formatCurrency(item.revenue)}</span>
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-[9px] uppercase font-bold text-secondary">Setor</span>
+                                  <span className="text-[12px] font-bold">{formatCurrency(item.cost)}</span>
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-[9px] uppercase font-bold text-secondary">Fee</span>
+                                  <span className="text-[12px] font-bold text-success">{formatCurrency(item.fee)}</span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               )}
