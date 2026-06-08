@@ -12,6 +12,7 @@ import {
   PieChart,
   History,
   Calculator,
+  CreditCard,
   ArrowUpRight,
   ArrowDownRight,
   Printer,
@@ -83,6 +84,13 @@ interface Sale {
   totalCost: number;
 }
 
+interface PaymentRecord {
+  id: string;
+  date: string;
+  amount: number;
+  note?: string | null;
+}
+
 // --- Helper Functions ---
 
 const formatCurrency = (value: number) => {
@@ -122,12 +130,15 @@ const calculatePricing = (type: ProductType, weight: number): { price: number; c
 
 export default function BituCalcApp() {
   const [sales, setSales] = useState<Sale[]>([]);
+  const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [isMounted, setIsMounted] = useState(false);
 
   // Fetch from DB
   useEffect(() => {
     setIsMounted(true);
-    setSaleDate(new Date().toISOString().split('T')[0]);
+    const today = new Date().toISOString().split('T')[0];
+    setSaleDate(today);
+    setPaymentDate(today);
     const fetchSales = async () => {
       try {
         const response = await fetch('/api/sales');
@@ -139,9 +150,21 @@ export default function BituCalcApp() {
         console.error('Failed to fetch sales');
       }
     };
+    const fetchPayments = async () => {
+      try {
+        const response = await fetch('/api/payments');
+        if (response.ok) {
+          const data = await response.json();
+          setPayments(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch payments');
+      }
+    };
     fetchSales();
+    fetchPayments();
   }, []);
-  const [activeTab, setActiveTab] = useState<'calculator' | 'analysis' | 'history'>('calculator');
+  const [activeTab, setActiveTab] = useState<'calculator' | 'analysis' | 'payment' | 'history'>('calculator');
   const [filterDate, setFilterDate] = useState<string>('');
 
   // Form State
@@ -150,6 +173,11 @@ export default function BituCalcApp() {
   const [customWeight, setCustomWeight] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(1);
   const [saleDate, setSaleDate] = useState<string>('');
+
+  // Payment State
+  const [paymentDate, setPaymentDate] = useState<string>('');
+  const [paymentAmount, setPaymentAmount] = useState<string>('');
+  const [paymentNote, setPaymentNote] = useState<string>('');
 
   // Analysis State
   const [statPeriod, setStatPeriod] = useState<'daily' | 'monthly'>('daily');
@@ -160,6 +188,7 @@ export default function BituCalcApp() {
   // Notification State
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deletePaymentConfirmId, setDeletePaymentConfirmId] = useState<string | null>(null);
 
   useEffect(() => {
     const savedState = typeof window !== 'undefined' ? window.localStorage.getItem('bitucalc.historyCollapsed') : null;
@@ -251,6 +280,62 @@ export default function BituCalcApp() {
     }
   };
 
+  const handleAddPayment = async () => {
+    const amount = Number(paymentAmount);
+
+    if (!paymentDate) {
+      setNotification({ message: 'Tanggal setoran harus diisi!', type: 'error' });
+      return;
+    }
+
+    if (!amount || amount <= 0) {
+      setNotification({ message: 'Jumlah setoran harus lebih dari 0!', type: 'error' });
+      return;
+    }
+
+    const newPayment: PaymentRecord = {
+      id: Math.random().toString(36).substring(7),
+      date: paymentDate,
+      amount,
+      note: paymentNote.trim() || null,
+    };
+
+    const prevPayments = [...payments];
+    setPayments([newPayment, ...payments]);
+    setNotification({ message: 'Setoran berhasil di catat', type: 'success' });
+    setPaymentAmount('');
+    setPaymentNote('');
+
+    try {
+      const response = await fetch('/api/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newPayment)
+      });
+      if (!response.ok) throw new Error();
+    } catch (error) {
+      setPayments(prevPayments);
+      setNotification({ message: 'Gagal menyimpan setoran ke database!', type: 'error' });
+    }
+  };
+
+  const handleDeletePayment = async (id: string) => {
+    const prevPayments = [...payments];
+    setPayments(payments.filter(p => p.id !== id));
+    setNotification({ message: 'Setoran berhasil di hapus', type: 'success' });
+    setDeletePaymentConfirmId(null);
+
+    try {
+      const response = await fetch(`/api/payments?id=${id}`, {
+        method: 'DELETE'
+      });
+      if (!response.ok) throw new Error();
+    } catch (error) {
+      setPayments(prevPayments);
+      setNotification({ message: 'Gagal menghapus setoran di database!', type: 'error' });
+    }
+  };
+
   const handlePrint = (month?: string) => {
     if (month) {
       setPrintingMonth(month);
@@ -290,6 +375,13 @@ export default function BituCalcApp() {
   const totalRevenue = useMemo(() => sales.reduce((acc, s) => acc + (Number(s.totalPrice) || 0), 0), [sales]);
   const totalCost = useMemo(() => sales.reduce((acc, s) => acc + (Number(s.totalCost) || 0), 0), [sales]);
   const totalProfit = useMemo(() => totalRevenue - totalCost, [totalRevenue, totalCost]);
+  const totalPaid = useMemo(() => payments.reduce((acc, p) => acc + (Number(p.amount) || 0), 0), [payments]);
+  const remainingPayment = useMemo(() => Math.max(totalCost - totalPaid, 0), [totalCost, totalPaid]);
+  const overpaidPayment = useMemo(() => Math.max(totalPaid - totalCost, 0), [totalCost, totalPaid]);
+  const paymentProgress = useMemo(() => {
+    if (totalCost <= 0) return 0;
+    return Math.min(100, (totalPaid / totalCost) * 100);
+  }, [totalCost, totalPaid]);
   // const totalWeight = useMemo(() => sales.reduce((acc, s) => acc + ((Number(s.weight) || 0) * (Number(s.quantity) || 0)), 0), [sales]);
 
   const analysisStats = useMemo(() => {
@@ -868,6 +960,157 @@ export default function BituCalcApp() {
                 </motion.div>
               )}
 
+              {activeTab === 'payment' && (
+                <motion.div
+                  key="payment"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="space-y-5"
+                >
+                  <div className="bg-primary text-white p-6 rounded-[24px]">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-success text-[10px] font-bold uppercase tracking-wider">Sisa Setoran</p>
+                        <h2 className="text-[28px] font-bold tracking-tight text-success">{formatCurrency(remainingPayment)}</h2>
+                      </div>
+                      <div className="w-11 h-11 rounded-[16px] bg-white/10 flex items-center justify-center">
+                        <CreditCard size={20} className="text-success" />
+                      </div>
+                    </div>
+
+                    <div className="mt-5 h-2 rounded-full bg-white/10 overflow-hidden">
+                      <div
+                        className="h-full bg-success rounded-full transition-all duration-500"
+                        style={{ width: `${paymentProgress}%` }}
+                      />
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-2 gap-3 text-[11px]">
+                      <div className="bg-white/5 p-3 rounded-[16px]">
+                        <span className="text-secondary uppercase font-bold block mb-1">Wajib Setor</span>
+                        <span className="font-medium text-[14px]">{formatCurrency(totalCost)}</span>
+                      </div>
+                      <div className="bg-white/5 p-3 rounded-[16px]">
+                        <span className="text-secondary uppercase font-bold block mb-1">Sudah Setor</span>
+                        <span className="font-medium text-[14px]">{formatCurrency(totalPaid)}</span>
+                      </div>
+                    </div>
+
+                    {overpaidPayment > 0 && (
+                      <div className="mt-3 rounded-[14px] bg-success/10 border border-success/20 px-3 py-2 text-[11px] font-bold text-success">
+                        Kelebihan setoran: {formatCurrency(overpaidPayment)}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="analysis-card space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[12px] uppercase font-bold text-secondary tracking-[0.5px]">Catat Setoran</span>
+                      <span className="text-[10px] font-bold uppercase text-secondary">{Math.round(paymentProgress)}% Paid</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase text-secondary mb-2 block">Tanggal</span>
+                        <div className="bg-white px-3 py-2 rounded-[14px] flex items-center gap-2 border border-border h-[46px]">
+                          <Calendar size={15} className="text-secondary shrink-0" />
+                          <input
+                            type="date"
+                            value={paymentDate}
+                            onChange={(e) => setPaymentDate(e.target.value)}
+                            className="w-full bg-transparent text-[12px] font-bold focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold uppercase text-secondary mb-2 block">Jumlah</span>
+                        <div className="bg-white px-3 py-2 rounded-[14px] border border-border h-[46px] flex items-center">
+                          <input
+                            type="number"
+                            min="0"
+                            inputMode="numeric"
+                            value={paymentAmount}
+                            onChange={(e) => setPaymentAmount(e.target.value)}
+                            placeholder="Rp"
+                            className="w-full bg-transparent text-[13px] font-bold focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] font-bold uppercase text-secondary mb-2 block">Catatan</span>
+                      <div className="bg-white px-3 py-2 rounded-[14px] border border-border h-[46px] flex items-center">
+                        <input
+                          type="text"
+                          value={paymentNote}
+                          onChange={(e) => setPaymentNote(e.target.value)}
+                          placeholder="Nama penjual / catatan"
+                          className="w-full bg-transparent text-[13px] font-bold focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-[auto_1fr] gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setPaymentAmount(String(remainingPayment))}
+                        disabled={remainingPayment <= 0}
+                        className="px-4 py-3 rounded-[14px] border border-border bg-white text-[11px] font-bold uppercase text-secondary disabled:opacity-40"
+                      >
+                        Isi Sisa
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleAddPayment}
+                        className="bg-primary text-white py-3 rounded-[14px] font-bold hover:opacity-90 transition-opacity text-[13px]"
+                      >
+                        Simpan Setoran
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="section-label">Riwayat Setoran</span>
+                      <div className="text-[10px] font-bold text-secondary uppercase tracking-widest">
+                        {payments.length} Items
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      {payments.map((payment) => (
+                        <div key={payment.id} className="bg-bg p-4 rounded-[16px] flex items-center justify-between gap-4">
+                          <div className="min-w-0">
+                            <p className="text-[14px] font-bold">{payment.note || 'Setoran'}</p>
+                            <p className="text-[11px] text-secondary">
+                              {new Date(payment.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-3 shrink-0">
+                            <p className="text-[14px] font-bold text-success">{formatCurrency(Number(payment.amount) || 0)}</p>
+                            <button
+                              onClick={() => setDeletePaymentConfirmId(payment.id)}
+                              className="text-secondary hover:text-red-500 transition-colors"
+                              title="Hapus setoran"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+
+                      {payments.length === 0 && (
+                        <div className="py-12 text-center">
+                          <p className="text-secondary text-[13px] font-medium">Belum ada data setoran</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
               {activeTab === 'history' && (
                 <motion.div
                   key="history"
@@ -936,7 +1179,7 @@ export default function BituCalcApp() {
           </div>
 
           {/* Navigation Bar */}
-          <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-4xl bg-white/90 backdrop-blur-md border-t border-border px-8 py-4 flex items-center justify-around z-50 no-print shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+          <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-4xl bg-white/90 backdrop-blur-md border-t border-border px-4 py-4 flex items-center justify-around z-50 no-print shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
             <button
               onClick={() => setActiveTab('calculator')}
               className={cn(
@@ -956,6 +1199,16 @@ export default function BituCalcApp() {
             >
               <BarChart3 size={20} />
               <span className="text-[10px] font-bold uppercase">Stats</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('payment')}
+              className={cn(
+                "flex flex-col items-center gap-1 transition-all",
+                activeTab === 'payment' ? "text-primary" : "text-secondary"
+              )}
+            >
+              <CreditCard size={20} />
+              <span className="text-[10px] font-bold uppercase">Payment</span>
             </button>
             <button
               onClick={() => setActiveTab('history')}
@@ -1014,7 +1267,49 @@ export default function BituCalcApp() {
           </div>
         )}
       </AnimatePresence>
+      <AnimatePresence>
+        {deletePaymentConfirmId && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 no-print">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setDeletePaymentConfirmId(null)}
+              className="absolute inset-0 bg-primary/40 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative bg-white w-full max-w-[320px] rounded-[24px] p-6 shadow-2xl overflow-hidden"
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mb-4">
+                  <AlertTriangle className="text-red-500" size={24} />
+                </div>
+                <h3 className="text-[18px] font-bold text-primary mb-1">Hapus Setoran?</h3>
+                <p className="text-secondary text-[13px] leading-relaxed mb-6">
+                  Apakah Anda yakin ingin menghapus data setoran ini? Tindakan ini tidak dapat dibatalkan.
+                </p>
+                <div className="grid grid-cols-2 gap-3 w-full">
+                  <button
+                    onClick={() => setDeletePaymentConfirmId(null)}
+                    className="py-3 rounded-[12px] border border-border font-bold text-secondary hover:bg-bg transition-colors text-[13px]"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={() => handleDeletePayment(deletePaymentConfirmId)}
+                    className="py-3 rounded-[12px] bg-red-500 text-white font-bold hover:bg-red-600 transition-colors shadow-lg shadow-red-200 text-[13px]"
+                  >
+                    Hapus
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
-

@@ -32,6 +32,17 @@ async function initDb() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
     console.log('Table "sales" created successfully or already exists.');
+
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS payments (
+        id VARCHAR(36) PRIMARY KEY,
+        date DATE NOT NULL,
+        amount DECIMAL(15, 2) NOT NULL,
+        note VARCHAR(255) NULL,
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+    console.log('Table "payments" created successfully or already exists.');
     await connection.end();
   } catch (error) {
     console.error('Error:', error.message);
