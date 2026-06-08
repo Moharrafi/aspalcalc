@@ -101,6 +101,16 @@ const formatCurrency = (value: number) => {
   }).format(value);
 };
 
+const normalizeNumberInput = (value: string) => {
+  return value.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
+};
+
+const formatNumberInput = (value: string) => {
+  const digits = normalizeNumberInput(value);
+  if (!digits) return '';
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+};
+
 const calculatePricing = (type: ProductType, weight: number): { price: number; cost: number } => {
   const options = [...PRICES[type]].sort((a, b) => b.weight - a.weight);
   let remainingWeight = weight;
@@ -1027,11 +1037,10 @@ export default function BituCalcApp() {
                         <span className="text-[10px] font-bold uppercase text-secondary mb-2 block">Jumlah</span>
                         <div className="bg-white px-3 py-2 rounded-[14px] border border-border h-[46px] flex items-center">
                           <input
-                            type="number"
-                            min="0"
+                            type="text"
                             inputMode="numeric"
-                            value={paymentAmount}
-                            onChange={(e) => setPaymentAmount(e.target.value)}
+                            value={formatNumberInput(paymentAmount)}
+                            onChange={(e) => setPaymentAmount(normalizeNumberInput(e.target.value))}
                             placeholder="Rp"
                             className="w-full bg-transparent text-[13px] font-bold focus:outline-none"
                           />
@@ -1055,7 +1064,7 @@ export default function BituCalcApp() {
                     <div className="grid grid-cols-[auto_1fr] gap-2">
                       <button
                         type="button"
-                        onClick={() => setPaymentAmount(String(remainingPayment))}
+                        onClick={() => setPaymentAmount(String(Math.round(remainingPayment)))}
                         disabled={remainingPayment <= 0}
                         className="px-4 py-3 rounded-[14px] border border-border bg-white text-[11px] font-bold uppercase text-secondary disabled:opacity-40"
                       >
