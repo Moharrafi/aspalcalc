@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
+import { flushSync } from 'react-dom';
 import {
   Plus,
   Trash2,
@@ -347,16 +348,13 @@ export default function BituCalcApp() {
   };
 
   const handlePrint = (month?: string) => {
-    if (month) {
-      setPrintingMonth(month);
-      // Wait for React to update the printable area with filtered data
-      setTimeout(() => {
-        window.print();
-        setPrintingMonth(null);
-      }, 150);
-    } else {
-      window.print();
-    }
+    const reportMonth = month || null;
+
+    flushSync(() => {
+      setPrintingMonth(reportMonth);
+    });
+
+    window.print();
   };
 
   const salesToPrint = useMemo(() => {
@@ -365,15 +363,24 @@ export default function BituCalcApp() {
     return sales.filter(s => s.date.startsWith(printingMonth));
   }, [sales, printingMonth]);
 
+  const paymentsToPrint = useMemo(() => {
+    if (!printingMonth) return payments;
+    return payments.filter(p => p.date.startsWith(printingMonth));
+  }, [payments, printingMonth]);
+
   const printSummary = useMemo(() => {
     const revenue = salesToPrint.reduce((acc, s) => acc + (Number(s.totalPrice) || 0), 0);
     const cost = salesToPrint.reduce((acc, s) => acc + (Number(s.totalCost) || 0), 0);
+    const paid = paymentsToPrint.reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
     return {
       revenue,
       cost,
+      paid,
+      remaining: Math.max(cost - paid, 0),
+      overpaid: Math.max(paid - cost, 0),
       profit: revenue - cost
     };
-  }, [salesToPrint]);
+  }, [salesToPrint, paymentsToPrint]);
 
   // --- Analysis Computations ---
 
@@ -464,19 +471,28 @@ export default function BituCalcApp() {
               ? new Date(printingMonth).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
               : new Date(printingMonth + '-01').toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })})` : ''}
           </h2>
-          <div className="grid grid-cols-3 border border-black divide-x divide-black">
+          <div className="grid grid-cols-4 border border-black divide-x divide-black">
             <div className="p-4 bg-gray-50">
               <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Total Jual</p>
-              <p className="text-xl font-bold">{formatCurrency(printSummary.revenue)}</p>
+              <p className="text-lg font-bold tabular-nums">{formatCurrency(printSummary.revenue)}</p>
             </div>
             <div className="p-4 bg-gray-50">
               <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Total Setor</p>
-              <p className="text-xl font-bold">{formatCurrency(printSummary.cost)}</p>
+              <p className="text-lg font-bold tabular-nums">{formatCurrency(printSummary.cost)}</p>
+            </div>
+            <div className="p-4 bg-gray-50">
+              <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Sudah Dibayar</p>
+              <p className="text-lg font-bold tabular-nums">{formatCurrency(printSummary.paid)}</p>
             </div>
             <div className="p-4 bg-white">
               <p className="text-[10px] uppercase font-bold text-emerald-700 mb-1">Total Fee (Profit)</p>
-              <p className="text-xl font-bold text-emerald-700 tabular-nums">{formatCurrency(printSummary.profit)}</p>
+              <p className="text-lg font-bold text-emerald-700 tabular-nums">{formatCurrency(printSummary.profit)}</p>
             </div>
+          </div>
+          <div className="mt-2 flex justify-end text-xs font-bold text-gray-700">
+            {printSummary.overpaid > 0
+              ? `Kelebihan setoran: ${formatCurrency(printSummary.overpaid)}`
+              : `Sisa setoran: ${formatCurrency(printSummary.remaining)}`}
           </div>
         </div>
 
