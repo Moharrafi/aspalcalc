@@ -20,7 +20,9 @@ import {
   Download,
   CheckCircle2,
   AlertCircle,
-  AlertTriangle
+  AlertTriangle,
+  Award,
+  BarChart2
 } from 'lucide-react';
 import {
   BarChart,
@@ -36,9 +38,11 @@ import {
   LineChart,
   Line
 } from 'recharts';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { PrintReportModern } from '@/components/PrintReportModern';
+import { PrintReportV1Backup } from '@/components/PrintReportV1Backup';
 
 // Utility for tailwind classes
 function cn(...inputs: ClassValue[]) {
@@ -57,21 +61,21 @@ interface PricePoint {
 
 const PRICES: Record<ProductType, PricePoint[]> = {
   bitumax: [
-    { weight: 1, price: 50000, cost: 40000 },
-    { weight: 5, price: 190000, cost: 152000 },
-    { weight: 20, price: 720000, cost: 606000 },
+    { weight: 1, price: 50000, cost: 50000 },
+    { weight: 5, price: 190000, cost: 190000 },
+    { weight: 20, price: 720000, cost: 720000 },
   ],
   hijau: [
-    { weight: 1, price: 33000, cost: 26400 },
-    { weight: 5, price: 130000, cost: 104000 },
-    { weight: 20, price: 600000, cost: 480000 },
-    { weight: 25, price: 650000, cost: 520000 },
+    { weight: 1, price: 33000, cost: 33000 },
+    { weight: 5, price: 130000, cost: 130000 },
+    { weight: 20, price: 600000, cost: 600000 },
+    { weight: 25, price: 650000, cost: 650000 },
   ],
   hitam: [
-    { weight: 1, price: 33000, cost: 26400 },
-    { weight: 5, price: 130000, cost: 104000 },
-    { weight: 20, price: 600000, cost: 480000 },
-    { weight: 25, price: 650000, cost: 520000 },
+    { weight: 1, price: 33000, cost: 33000 },
+    { weight: 5, price: 130000, cost: 130000 },
+    { weight: 20, price: 600000, cost: 600000 },
+    { weight: 25, price: 650000, cost: 650000 },
   ],
 };
 
@@ -137,8 +141,6 @@ const calculatePricing = (type: ProductType, weight: number): { price: number; c
   return { price: totalPrice, cost: totalCost };
 };
 
-// --- Components ---
-
 export default function BituCalcApp() {
   const [sales, setSales] = useState<Sale[]>([]);
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
@@ -175,11 +177,12 @@ export default function BituCalcApp() {
     fetchSales();
     fetchPayments();
   }, []);
+
   const [activeTab, setActiveTab] = useState<'calculator' | 'analysis' | 'payment' | 'history'>('calculator');
   const [filterDate, setFilterDate] = useState<string>('');
 
   // Form State
-  const [selectedType, setSelectedType] = useState<ProductType>('bitumax');
+  const [selectedType, setSelectedType] = useState<ProductType>('hitam');
   const [weight, setWeight] = useState<number>(1);
   const [customWeight, setCustomWeight] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(1);
@@ -194,25 +197,11 @@ export default function BituCalcApp() {
   const [statPeriod, setStatPeriod] = useState<'daily' | 'monthly'>('daily');
   const [printingMonth, setPrintingMonth] = useState<string | null>(null);
   const [analysisMonth, setAnalysisMonth] = useState<string>('');
-  const [historyCollapsed, setHistoryCollapsed] = useState(false);
 
   // Notification State
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deletePaymentConfirmId, setDeletePaymentConfirmId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const savedState = typeof window !== 'undefined' ? window.localStorage.getItem('bitucalc.historyCollapsed') : null;
-    if (savedState !== null) {
-      setHistoryCollapsed(savedState === 'true');
-    }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem('bitucalc.historyCollapsed', String(historyCollapsed));
-    }
-  }, [historyCollapsed]);
 
   useEffect(() => {
     if (notification) {
@@ -251,10 +240,9 @@ export default function BituCalcApp() {
       totalCost: pricing.cost * quantity,
     };
 
-    // Optimistic Update: Update UI immediately
     const prevSales = [...sales];
     setSales([newSale, ...sales]);
-    setNotification({ message: 'Data berhasil di simpan', type: 'success' });
+    setNotification({ message: 'Transaksi berhasil disimpan', type: 'success' });
     setQuantity(1);
     if (weight === 0) setCustomWeight('');
 
@@ -266,17 +254,15 @@ export default function BituCalcApp() {
       });
       if (!response.ok) throw new Error();
     } catch (error) {
-      // Revert if failed
       setSales(prevSales);
       setNotification({ message: 'Gagal sinkron ke database!', type: 'error' });
     }
   };
 
   const handleDeleteSale = async (id: string) => {
-    // Optimistic Update: Remove from UI immediately
     const prevSales = [...sales];
     setSales(sales.filter(s => s.id !== id));
-    setNotification({ message: 'Data berhasil di hapus', type: 'success' });
+    setNotification({ message: 'Data penjualan dihapus', type: 'success' });
     setDeleteConfirmId(null);
 
     try {
@@ -285,7 +271,6 @@ export default function BituCalcApp() {
       });
       if (!response.ok) throw new Error();
     } catch (error) {
-      // Revert if failed
       setSales(prevSales);
       setNotification({ message: 'Gagal menghapus data di database!', type: 'error' });
     }
@@ -313,7 +298,7 @@ export default function BituCalcApp() {
 
     const prevPayments = [...payments];
     setPayments([newPayment, ...payments]);
-    setNotification({ message: 'Setoran berhasil di catat', type: 'success' });
+    setNotification({ message: 'Setoran berhasil dicatat', type: 'success' });
     setPaymentAmount('');
     setPaymentNote('');
 
@@ -333,7 +318,7 @@ export default function BituCalcApp() {
   const handleDeletePayment = async (id: string) => {
     const prevPayments = [...payments];
     setPayments(payments.filter(p => p.id !== id));
-    setNotification({ message: 'Setoran berhasil di hapus', type: 'success' });
+    setNotification({ message: 'Data setoran dihapus', type: 'success' });
     setDeletePaymentConfirmId(null);
 
     try {
@@ -348,7 +333,7 @@ export default function BituCalcApp() {
   };
 
   const handlePrint = (month?: string) => {
-    const reportMonth = month || null;
+    const reportMonth = month !== undefined ? month : (analysisMonth || null);
 
     flushSync(() => {
       setPrintingMonth(reportMonth);
@@ -359,7 +344,6 @@ export default function BituCalcApp() {
 
   const salesToPrint = useMemo(() => {
     if (!printingMonth) return sales;
-    // printingMonth could be YYYY-MM (monthly) or YYYY-MM-DD (daily)
     return sales.filter(s => s.date.startsWith(printingMonth));
   }, [sales, printingMonth]);
 
@@ -399,12 +383,42 @@ export default function BituCalcApp() {
     if (totalCost <= 0) return 0;
     return Math.min(100, (totalPaid / totalCost) * 100);
   }, [totalCost, totalPaid]);
-  // const totalWeight = useMemo(() => sales.reduce((acc, s) => acc + ((Number(s.weight) || 0) * (Number(s.quantity) || 0)), 0), [sales]);
 
   const analysisStats = useMemo(() => {
     const rev = analysisSales.reduce((acc, s) => acc + (Number(s.totalPrice) || 0), 0);
     const cost = analysisSales.reduce((acc, s) => acc + (Number(s.totalCost) || 0), 0);
-    return { revenue: rev, cost, profit: rev - cost };
+    const qty = analysisSales.reduce((acc, s) => acc + (Number(s.quantity) || 0), 0);
+    return { revenue: rev, cost, qty, profit: rev - cost };
+  }, [analysisSales]);
+
+  // Product & Size Variant Breakdown (Ranking)
+  const variantBreakdown = useMemo(() => {
+    const map: Record<string, { type: ProductType; weight: number; quantity: number; revenue: number; cost: number }> = {};
+    analysisSales.forEach((sale) => {
+      const key = `${sale.type}_${sale.weight}`;
+      if (!map[key]) {
+        map[key] = {
+          type: sale.type,
+          weight: sale.weight,
+          quantity: 0,
+          revenue: 0,
+          cost: 0,
+        };
+      }
+      map[key].quantity += Number(sale.quantity) || 0;
+      map[key].revenue += Number(sale.totalPrice) || 0;
+      map[key].cost += Number(sale.totalCost) || 0;
+    });
+
+    const list = Object.values(map);
+    const totalQty = list.reduce((sum, item) => sum + item.quantity, 0);
+
+    return list
+      .map((item) => ({
+        ...item,
+        percentage: totalQty > 0 ? Math.round((item.quantity / totalQty) * 100) : 0,
+      }))
+      .sort((a, b) => b.quantity - a.quantity);
   }, [analysisSales]);
 
   const salesByType = useMemo(() => {
@@ -424,7 +438,7 @@ export default function BituCalcApp() {
       const dateOnly = s.date.split('T')[0];
       const key = statPeriod === 'daily'
         ? dateOnly
-        : dateOnly.substring(0, 7); // YYYY-MM
+        : dateOnly.substring(0, 7);
 
       if (!data[key]) {
         data[key] = { revenue: 0, cost: 0, fee: 0, weight: 0, count: 0 };
@@ -439,266 +453,217 @@ export default function BituCalcApp() {
 
     return Object.entries(data).map(([period, stats]) => ({
       period: statPeriod === 'daily'
-        ? period.split('-').slice(1).reverse().join('/') // DD/MM
+        ? period.split('-').slice(1).reverse().join('/')
         : new Date(period + '-01').toLocaleDateString('id-ID', { month: 'short', year: 'numeric' }),
       fullPeriod: period,
       ...stats
     })).sort((a, b) => a.fullPeriod.localeCompare(b.fullPeriod));
   }, [analysisSales, statPeriod]);
 
-  const COLORS = ['#F97316', '#10B981', '#000000'];
+  const COLORS = ['#F59E0B', '#10B981', '#475569'];
 
   return (
     <>
-      {/* --- Standard Business Print Report --- */}
-      <div className="hidden print:block printable-area bg-white text-black p-10 font-sans">
-        {/* Simple Header */}
-        <div className="border-b-2 border-black pb-4 mb-8 flex justify-between items-end">
-          <div>
-            <h1 className="text-3xl font-bold uppercase tracking-tight">Laporan Penjualan</h1>
-            <p className="text-sm font-medium text-gray-600 italic">Aspal Sales Analytics System</p>
-          </div>
-          <div className="text-right text-xs">
-            <p>Tanggal Cetak: {isMounted ? new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : ''}</p>
-            <p className="mt-1">Ref ID: #{isMounted ? new Date().getTime().toString().slice(-6) : '......'}</p>
-          </div>
-        </div>
+      {/* --- Modern Reseller Print Report --- */}
+      <PrintReportModern
+        isMounted={isMounted}
+        printingMonth={printingMonth}
+        printSummary={printSummary}
+        salesToPrint={salesToPrint}
+        formatCurrency={formatCurrency}
+      />
 
-        {/* Summary Table Style */}
-        <div className="mb-8">
-          <h2 className="text-xs font-bold uppercase tracking-widest mb-3 border-l-4 border-black pl-3 text-gray-700">
-            Ringkasan Penjualan {printingMonth ? `(Periode: ${printingMonth.length > 7
-              ? new Date(printingMonth).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
-              : new Date(printingMonth + '-01').toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })})` : ''}
-          </h2>
-          <div className="grid grid-cols-4 border border-black divide-x divide-black">
-            <div className="p-4 bg-gray-50">
-              <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Total Jual</p>
-              <p className="text-lg font-bold tabular-nums">{formatCurrency(printSummary.revenue)}</p>
-            </div>
-            <div className="p-4 bg-gray-50">
-              <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Total Setor</p>
-              <p className="text-lg font-bold tabular-nums">{formatCurrency(printSummary.cost)}</p>
-            </div>
-            <div className="p-4 bg-gray-50">
-              <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Sudah Dibayar</p>
-              <p className="text-lg font-bold tabular-nums">{formatCurrency(printSummary.paid)}</p>
-            </div>
-            <div className="p-4 bg-white">
-              <p className="text-[10px] uppercase font-bold text-emerald-700 mb-1">Total Fee (Profit)</p>
-              <p className="text-lg font-bold text-emerald-700 tabular-nums">{formatCurrency(printSummary.profit)}</p>
-            </div>
-          </div>
-          <div className="mt-2 flex justify-end text-xs font-bold text-gray-700">
-            {printSummary.overpaid > 0
-              ? `Kelebihan setoran: ${formatCurrency(printSummary.overpaid)}`
-              : `Sisa setoran: ${formatCurrency(printSummary.remaining)}`}
-          </div>
-        </div>
-
-        {/* Transaction Table */}
-        <div>
-          <h2 className="text-xs font-bold uppercase tracking-widest mb-3 border-l-4 border-black pl-3 text-gray-700">Detail Transaksi</h2>
-          <table className="w-full border border-black border-collapse text-xs">
-            <thead>
-              <tr className="bg-gray-100 divide-x divide-black">
-                <th className="p-3 font-bold border-b border-black">Tanggal</th>
-                <th className="p-3 font-bold border-b border-black text-left">Deskripsi Produk</th>
-                <th className="p-3 font-bold border-b border-black text-center">Qty</th>
-                <th className="p-3 font-bold border-b border-black text-right">Harga Jual</th>
-                <th className="p-3 font-bold border-b border-black text-right bg-emerald-50">Fee (Profit)</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {salesToPrint.map((sale) => (
-                <tr key={sale.id} className="divide-x divide-black">
-                  <td className="p-3">{new Date(sale.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</td>
-                  <td className="p-3">
-                    <span className="font-bold uppercase">{sale.type}</span> ({Number(sale.weight)}kg)
-                  </td>
-                  <td className="p-3 text-center font-bold">{sale.quantity}</td>
-                  <td className="p-3 text-right">{formatCurrency(sale.totalPrice)}</td>
-                  <td className="p-3 text-right font-bold text-emerald-700 bg-emerald-50/50">
-                    {formatCurrency(sale.totalPrice - sale.totalCost)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr className="bg-gray-100 font-bold border-t border-black divide-x divide-black">
-                <td colSpan={3} className="p-3 text-right uppercase">Total Seluruhnya:</td>
-                <td className="p-3 text-right">{formatCurrency(printSummary.revenue)}</td>
-                <td className="p-3 text-right text-emerald-700">{formatCurrency(printSummary.profit)}</td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-
-        {/* Standard Signatures */}
-        <div className="mt-20 flex justify-end gap-24 px-4 text-xs">
-          <div className="text-center">
-            <p className="mb-20">Diterima Oleh,</p>
-            <div className="border-b border-black w-40 mb-1"></div>
-            <p>( Pak Jaja )</p>
-          </div>
-          <div className="text-center font-bold">
-            <p className="mb-20">Hormat Kami,</p>
-            <div className="border-b border-black w-40 mb-1"></div>
-            <p>Rafi</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="min-h-screen bg-bg no-print">
-        {/* Main Content Container */}
-        <div className="w-full max-w-4xl mx-auto min-h-screen bg-card flex flex-col relative">
+      <div className="min-h-screen bg-[#F8FAFC] text-slate-900 no-print pb-28">
+        {/* Main Application Container */}
+        <div className="w-full max-w-xl mx-auto min-h-screen flex flex-col relative px-4 pt-4">
+          
           {/* Notification Toast */}
           <AnimatePresence>
             {notification && (
               <motion.div
-                initial={{ y: -100, opacity: 0 }}
+                initial={{ y: -80, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                exit={{ y: -100, opacity: 0 }}
-                transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-                className="fixed top-5 left-1/2 -translate-x-1/2 w-full max-w-md px-4 z-[100] no-print"
+                exit={{ y: -80, opacity: 0 }}
+                transition={{ type: 'spring', damping: 22, stiffness: 350 }}
+                className="fixed top-4 left-1/2 -translate-x-1/2 w-full max-w-md px-4 z-[100] no-print"
               >
                 <div className={cn(
-                  "flex items-center gap-3 p-4 rounded-[20px] shadow-2xl border",
+                  "flex items-center gap-3 p-4 rounded-xl shadow-xl border bg-white",
                   notification.type === 'success'
-                    ? "bg-success text-white border-success"
-                    : "bg-red-500 text-white border-red-500"
+                    ? "text-emerald-800 border-emerald-300 shadow-emerald-900/5"
+                    : "text-rose-800 border-rose-300 shadow-rose-900/5"
                 )}>
-                  {notification.type === 'success' ? <CheckCircle2 size={20} /> : <AlertCircle size={20} />}
-                  <span className="text-[13px] font-bold">{notification.message}</span>
+                  {notification.type === 'success' ? <CheckCircle2 size={18} className="text-emerald-600" /> : <AlertCircle size={18} className="text-rose-600" />}
+                  <span className="text-xs font-bold">{notification.message}</span>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
 
+          {/* Top Brand Header */}
+          <header className="py-3 px-1 no-print flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-bold tracking-tight text-slate-900">Sales Calc</h1>
+              <p className="text-[12px] font-medium text-slate-500">Aspal Sales & Distribution</p>
+            </div>
 
-          {/* Header */}
-          <header className="px-6 pt-6 pb-4 no-print">
-            <h1 className="text-[24px] font-[800] tracking-[-0.5px] text-primary">Sales Calc</h1>
-            <p className="text-[14px] text-secondary mt-1">Aspal Distribution App</p>
+            <button
+              onClick={() => handlePrint()}
+              className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all"
+              title="Cetak Laporan"
+            >
+              <Printer size={15} className="text-slate-600" />
+              <span>Cetak Laporan</span>
+            </button>
           </header>
 
-          <div className="flex-1 overflow-y-auto no-scrollbar px-6 pb-24">
+          {/* Content Views */}
+          <div className="flex-1 mt-3">
             <AnimatePresence mode="wait">
               {activeTab === 'calculator' && (
                 <motion.div
                   key="calc"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="space-y-2"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.15 }}
+                  className="space-y-4"
                 >
-                  {/* Summary Card */}
-                  <div className="bg-primary text-white p-6 rounded-[24px] mb-6">
-                    <p className="text-success text-[10px] font-bold uppercase tracking-wider">Total Fee</p>
-                    <h2 className="text-[28px] font-bold tracking-tight text-success">{formatCurrency(totalProfit)}</h2>
-                    <div className="mt-4 flex items-center justify-between text-[11px]">
-                      <div className="flex flex-col">
-                        <span className="text-secondary uppercase font-bold">Total Jual</span>
-                        <span className="font-medium">{formatCurrency(totalRevenue)}</span>
+                  {/* Summary Banner Card */}
+                  <div className="bg-slate-900 text-white rounded-2xl p-5 shadow-sm">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-slate-400 text-[11px] font-bold uppercase tracking-wider">
+                        Total Penjualan (Omset)
+                      </span>
+                      <span className="text-[10px] font-bold bg-white/10 text-slate-300 px-2 py-0.5 rounded-md">
+                        {sales.length} Transaksi
+                      </span>
+                    </div>
+                    
+                    <h2 className="text-2xl font-bold tracking-tight">
+                      {formatCurrency(totalRevenue)}
+                    </h2>
+
+                    <div className="mt-4 grid grid-cols-2 gap-3 pt-3 border-t border-slate-800 text-xs">
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Wajib Setor Modal</span>
+                        <span className="font-bold text-amber-400">{formatCurrency(totalCost)}</span>
                       </div>
-                      <div className="flex flex-col text-right">
-                        <span className="text-secondary uppercase font-bold">Total Setor</span>
-                        <span className="font-medium">{formatCurrency(totalCost)}</span>
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Sudah Ditransfer</span>
+                        <span className="font-bold text-sky-400">{formatCurrency(totalPaid)}</span>
                       </div>
                     </div>
                   </div>
-                  <span className="section-label">Type</span>
-                  <div className="flex gap-2 flex-wrap">
-                    {(['hitam', 'hijau', 'bitumax'] as ProductType[]).map((type) => (
+
+                  {/* Product Type Selection */}
+                  <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm space-y-3">
+                    <span className="text-xs uppercase font-bold text-slate-500 block">Pilih Produk</span>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(['hitam', 'hijau', 'bitumax'] as ProductType[]).map((type) => {
+                        const isSelected = selectedType === type;
+                        return (
+                          <button
+                            key={type}
+                            type="button"
+                            onClick={() => setSelectedType(type)}
+                            className={cn(
+                              "py-2.5 px-3 rounded-xl border text-center transition-all flex flex-col items-center justify-center gap-1",
+                              isSelected
+                                ? "bg-slate-900 text-white border-slate-900 font-bold shadow-sm"
+                                : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                            )}
+                          >
+                            <span className={cn(
+                              "w-2 h-2 rounded-full",
+                              type === 'hijau' ? "bg-emerald-500" :
+                              type === 'bitumax' ? "bg-amber-500" :
+                              "bg-slate-900"
+                            )} />
+                            <span className="text-xs font-bold uppercase">{type}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <span className="text-xs uppercase font-bold text-slate-500 block pt-1">Ukuran Kemasan</span>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {PRICES[selectedType].map((p) => {
+                        const isSelected = weight === p.weight;
+                        return (
+                          <button
+                            key={p.weight}
+                            type="button"
+                            onClick={() => setWeight(p.weight)}
+                            className={cn(
+                              "py-2 px-3 rounded-xl border text-xs font-bold transition-all text-center flex items-center justify-center gap-1",
+                              isSelected
+                                ? "bg-slate-900 text-white border-slate-900 shadow-sm"
+                                : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                            )}
+                          >
+                            <span>{p.weight} kg</span>
+                          </button>
+                        );
+                      })}
                       <button
-                        key={type}
-                        onClick={() => setSelectedType(type)}
+                        type="button"
+                        onClick={() => setWeight(0)}
                         className={cn(
-                          "chip capitalize",
-                          selectedType === type ? "chip-active" : "bg-transparent"
+                          "py-2 px-3 rounded-xl border text-xs font-bold transition-all text-center",
+                          weight === 0
+                            ? "bg-slate-900 text-white border-slate-900 shadow-sm"
+                            : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
                         )}
                       >
-                        {type}
+                        Custom kg
                       </button>
-                    ))}
+                    </div>
+
+                    {weight === 0 && (
+                      <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                        <span className="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Input Berat (kg)</span>
+                        <input
+                          type="number"
+                          value={customWeight}
+                          onChange={(e) => setCustomWeight(e.target.value)}
+                          placeholder="Contoh: 12"
+                          className="w-full bg-white border border-slate-200 px-3 py-2 rounded-lg text-xs font-bold text-slate-900 focus:outline-none focus:border-slate-400"
+                        />
+                      </div>
+                    )}
                   </div>
 
-                  <span className="section-label">Weight Option</span>
-                  <div className="grid grid-cols-2 gap-2">
-                    {PRICES[selectedType].map((p) => (
-                      <button
-                        key={p.weight}
-                        onClick={() => setWeight(p.weight)}
-                        className={cn(
-                          "chip flex items-center justify-between",
-                          weight === p.weight ? "chip-active" : "bg-transparent"
-                        )}
-                      >
-                        <span>{p.weight}kg</span>
-                        {p.weight >= 5 && (
-                          <span className={cn(
-                            "text-[8px] uppercase px-1.5 py-0.5 rounded font-bold",
-                            weight === p.weight ? "bg-white text-primary" : "bg-primary text-white"
-                          )}>
-                            Best Value
-                          </span>
-                        )}
-                      </button>
-                    ))}
-                    <button
-                      onClick={() => setWeight(0)}
-                      className={cn(
-                        "chip",
-                        weight === 0 ? "chip-active" : "bg-transparent"
-                      )}
-                    >
-                      Custom
-                    </button>
-                  </div>
-
-                  {weight === 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="bg-bg p-4 rounded-[16px] border border-border mt-2"
-                    >
-                      <span className="text-[10px] font-bold uppercase text-secondary mb-2 block">Input Custom Weight (kg)</span>
-                      <input
-                        type="number"
-                        value={customWeight}
-                        onChange={(e) => setCustomWeight(e.target.value)}
-                        placeholder="Enter weight in kg..."
-                        className="w-full bg-transparent text-[16px] font-bold focus:outline-none"
-                      />
-                    </motion.div>
-                  )}
-
-                  <div className="grid grid-cols-2 gap-4">
+                  {/* Quantity & Date Form */}
+                  <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm grid grid-cols-2 gap-3">
                     <div>
-                      <span className="section-label">Tanggal Transaksi</span>
-                      <div className="bg-bg px-1 py-2 rounded-[16px] flex items-center gap-2 border border-border h-[48px]">
-                        <Calendar size={16} className="text-secondary shrink-0" />
+                      <span className="text-xs uppercase font-bold text-slate-500 block mb-1.5">Tanggal</span>
+                      <div className="bg-slate-50 border border-slate-200 px-2.5 py-2 rounded-xl flex items-center gap-1.5 h-10">
+                        <Calendar size={14} className="text-slate-400 shrink-0" />
                         <input
                           type="date"
                           value={saleDate}
                           onChange={(e) => setSaleDate(e.target.value)}
-                          className="w-full bg-transparent text-[13px] font-[600] focus:outline-none pr-1"
+                          className="w-full bg-transparent text-xs font-bold text-slate-800 focus:outline-none"
                         />
                       </div>
                     </div>
+
                     <div>
-                      <span className="section-label">Quantity</span>
-                      <div className="flex items-center justify-between bg-bg p-2 rounded-[16px] border border-border h-[48px]">
+                      <span className="text-xs uppercase font-bold text-slate-500 block mb-1.5">Jumlah (Qty Pcs)</span>
+                      <div className="flex items-center justify-between bg-slate-50 border border-slate-200 px-2 py-1 rounded-xl h-10">
                         <button
+                          type="button"
                           onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                          className="w-8 h-8 rounded-[8px] bg-white border border-border flex items-center justify-center font-bold"
+                          className="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-700 font-bold flex items-center justify-center hover:bg-slate-100"
                         >
                           −
                         </button>
-                        <div className="font-bold text-[14px]">{quantity}</div>
+                        <span className="font-bold text-xs text-slate-900">{quantity}</span>
                         <button
+                          type="button"
                           onClick={() => setQuantity(quantity + 1)}
-                          className="w-8 h-8 rounded-[8px] bg-white border border-border flex items-center justify-center font-bold"
+                          className="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-700 font-bold flex items-center justify-center hover:bg-slate-100"
                         >
                           +
                         </button>
@@ -706,32 +671,25 @@ export default function BituCalcApp() {
                     </div>
                   </div>
 
-                  <div className="analysis-card mt-6">
-                    <span className="text-[12px] uppercase font-bold text-secondary tracking-[0.5px] mb-2 block">Sales Analysis</span>
-                    <div className="flex justify-between text-[13px] mb-2">
-                      <span className="text-secondary">Unit Price ({effectiveWeight}kg)</span>
-                      <span className="font-medium">{formatCurrency(calculatePricing(selectedType, effectiveWeight).price)}</span>
+                  {/* Action Summary Card */}
+                  <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm space-y-3">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-slate-500 block">Total Nominal</span>
+                        <span className="text-xl font-black text-slate-900">{formatCurrency(currentPrice)}</span>
+                      </div>
+                      <div className="text-right text-[11px] text-slate-500">
+                        <span className="block font-semibold">@ {formatCurrency(calculatePricing(selectedType, effectiveWeight).price)}</span>
+                        <span className="font-bold text-slate-900">{quantity} Pcs</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between text-[13px] mb-2">
-                      <span className="text-secondary">Price/kg</span>
-                      <span className="font-medium">{formatCurrency(calculatePricing(selectedType, effectiveWeight).price / (effectiveWeight || 1))}</span>
-                    </div>
-                    <div className="flex justify-between text-[13px]">
-                      <span className="text-success font-semibold">Bulk Saving</span>
-                      <span className="text-success font-semibold">
-                        -{formatCurrency(Math.max(0, (PRICES[selectedType][0].price * effectiveWeight) - calculatePricing(selectedType, effectiveWeight).price))}
-                      </span>
-                    </div>
-                  </div>
 
-                  <div className="mt-8 pt-6 border-t border-border flex flex-col">
-                    <span className="text-[14px] text-secondary">Total Price</span>
-                    <span className="text-[32px] font-[800] tracking-[-1px]">{formatCurrency(currentPrice)}</span>
                     <button
                       onClick={handleAddSale}
-                      className="w-full bg-primary text-white py-4 rounded-[16px] font-bold mt-4 hover:opacity-90 transition-opacity"
+                      className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-slate-800 transition-all text-xs flex items-center justify-center gap-1.5 shadow-sm"
                     >
-                      Record Sale
+                      <Plus size={16} />
+                      Simpan Transaksi
                     </button>
                   </div>
                 </motion.div>
@@ -740,248 +698,183 @@ export default function BituCalcApp() {
               {activeTab === 'analysis' && (
                 <motion.div
                   key="analysis"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="space-y-6 printable-area"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.15 }}
+                  className="space-y-4"
                 >
-                  {/* Print-only Header */}
-                  <div className="hidden print:block mb-8 border-b-2 border-primary pb-6">
-                    <div className="flex justify-between items-end">
-                      <div>
-                        <h1 className="text-3xl font-black tracking-tighter">BITUCALC REPORT</h1>
-                        <p className="text-sm text-secondary font-medium">Bitumax Distribution Analysis</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-[10px] uppercase font-bold text-secondary">Report Date</p>
-                        <p className="text-sm font-bold">{new Date().toLocaleDateString('id-ID', { dateStyle: 'long' })}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Print-only Summary Grid */}
-                  <div className="hidden print:grid print-summary-grid">
-                    <div className="print-summary-item">
-                      <p className="print-summary-label">Total Revenue</p>
-                      <p className="print-summary-value">{formatCurrency(totalRevenue)}</p>
-                    </div>
-                    <div className="print-summary-item">
-                      <p className="print-summary-label">Total Deposit</p>
-                      <p className="print-summary-value">{formatCurrency(totalCost)}</p>
-                    </div>
-                    <div className="print-summary-item">
-                      <p className="print-summary-label text-success">Total Fee (Profit)</p>
-                      <p className="print-summary-value text-success">{formatCurrency(totalProfit)}</p>
-                    </div>
-                  </div>
-
-                  {/* Period Selector & Print Button */}
-                  <div className="flex gap-2 no-print">
-                    <div className="flex-1 flex bg-bg p-1 rounded-[16px] border border-border">
+                  {/* Period Filter */}
+                  <div className="flex gap-2">
+                    <div className="flex-1 flex bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
                       <button
                         onClick={() => setStatPeriod('daily')}
                         className={cn(
-                          "flex-1 py-2 rounded-[12px] text-[12px] font-bold transition-all",
-                          statPeriod === 'daily' ? "bg-white shadow-sm text-primary" : "text-secondary"
+                          "flex-1 py-1.5 rounded-lg text-xs font-bold transition-all",
+                          statPeriod === 'daily' ? "bg-slate-900 text-white" : "text-slate-500"
                         )}
                       >
-                        Daily
+                        Harian
                       </button>
                       <button
                         onClick={() => setStatPeriod('monthly')}
                         className={cn(
-                          "flex-1 py-2 rounded-[12px] text-[12px] font-bold transition-all",
-                          statPeriod === 'monthly' ? "bg-white shadow-sm text-primary" : "text-secondary"
+                          "flex-1 py-1.5 rounded-lg text-xs font-bold transition-all",
+                          statPeriod === 'monthly' ? "bg-slate-900 text-white" : "text-slate-500"
                         )}
                       >
-                        Monthly
+                        Bulanan
                       </button>
                     </div>
-                    <div className="bg-bg px-3 py-1 rounded-[16px] border border-border flex items-center gap-2">
-                      <Calendar size={14} className="text-secondary" />
+
+                    <div className="bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-2">
+                      <Calendar size={14} className="text-slate-400" />
                       <input
                         type="month"
                         value={analysisMonth}
                         onChange={(e) => setAnalysisMonth(e.target.value)}
-                        className="bg-transparent text-[11px] font-bold focus:outline-none w-24"
+                        className="bg-transparent text-xs font-bold text-slate-800 focus:outline-none w-24"
                       />
                     </div>
-                    <button
-                      onClick={() => handlePrint(analysisMonth || undefined)}
-                      className="bg-primary text-white p-3 rounded-[16px] hover:opacity-90 transition-opacity flex items-center justify-center"
-                      title="Print Report"
-                    >
-                      <Printer size={20} />
-                    </button>
-                  </div>                   <div className="bg-primary text-white p-6 rounded-[24px]">
-                    <p className="text-success text-[10px] font-bold uppercase tracking-wider">Total Fee {analysisMonth ? `(${new Date(analysisMonth + '-01').toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })})` : ''}</p>
-                    <h2 className="text-[28px] font-bold tracking-tight text-success">{formatCurrency(analysisStats.profit)}</h2>
-                    <div className="mt-4 grid grid-cols-2 gap-4 text-[11px]">
-                      <div className="bg-white/5 p-3 rounded-[16px]">
-                        <span className="text-secondary uppercase font-bold block mb-1">Total Jual</span>
-                        <span className="font-medium text-[14px]">{formatCurrency(analysisStats.revenue)}</span>
+                  </div>
+
+                  {/* Summary Card */}
+                  <div className="bg-slate-900 text-white p-5 rounded-2xl shadow-sm">
+                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                      Total Penjualan {analysisMonth ? `(${new Date(analysisMonth + '-01').toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })})` : ''}
+                    </p>
+                    <h2 className="text-2xl font-bold mt-0.5">{formatCurrency(analysisStats.revenue)}</h2>
+
+                    <div className="mt-3 grid grid-cols-3 gap-2 text-xs pt-3 border-t border-slate-800">
+                      <div>
+                        <span className="text-slate-400 uppercase font-bold text-[9px] block mb-0.5">Barang Terjual</span>
+                        <span className="font-bold text-white text-sm">{analysisStats.qty} Pcs</span>
                       </div>
-                      <div className="bg-white/5 p-3 rounded-[16px]">
-                        <span className="text-secondary uppercase font-bold block mb-1">Total Setor</span>
-                        <span className="font-medium text-[14px]">{formatCurrency(analysisStats.cost)}</span>
+                      <div>
+                        <span className="text-slate-400 uppercase font-bold text-[9px] block mb-0.5">Wajib Setor</span>
+                        <span className="font-bold text-amber-400 text-sm">{formatCurrency(analysisStats.cost)}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 uppercase font-bold text-[9px] block mb-0.5">Transaksi</span>
+                        <span className="font-bold text-slate-200 text-sm">{analysisSales.length} Trans</span>
                       </div>
                     </div>
                   </div>
 
+                  {/* Chart */}
                   <div className="analysis-card">
-                    <h3 className="text-[12px] font-bold uppercase text-secondary mb-4">Revenue Timeline ({statPeriod})</h3>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-600 mb-3">
+                      Grafik Penjualan ({statPeriod})
+                    </h3>
                     <div className="h-48 w-full">
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={salesByPeriod} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                          <defs>
-                            <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="#111827" stopOpacity={1} />
-                              <stop offset="100%" stopColor="#111827" stopOpacity={0.7} />
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
+                        <BarChart data={salesByPeriod} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
                           <XAxis
                             dataKey="period"
                             axisLine={false}
                             tickLine={false}
-                            tick={{ fontSize: 9, fill: '#9CA3AF', fontWeight: 600 }}
-                            dy={10}
+                            tick={{ fontSize: 9, fill: '#64748B', fontWeight: 600 }}
+                            dy={5}
                           />
                           <YAxis
                             axisLine={false}
                             tickLine={false}
-                            tick={{ fontSize: 9, fill: '#9CA3AF' }}
+                            tick={{ fontSize: 9, fill: '#64748B' }}
                             tickFormatter={(value) => `Rp${value / 1000}k`}
                           />
                           <Tooltip
-                            cursor={{ fill: '#F9FAFB' }}
-                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
-                            formatter={(value: any) => [formatCurrency(Number(value)), 'Revenue']}
+                            cursor={{ fill: '#F8FAFC' }}
+                            contentStyle={{ backgroundColor: '#FFFFFF', borderRadius: '12px', border: '1px solid #E2E8F0', fontSize: '12px', color: '#0F172A' }}
+                            formatter={(value: any) => [formatCurrency(Number(value)), 'Total']}
                           />
-                          <Bar dataKey="revenue" fill="url(#colorRevenue)" radius={[6, 6, 0, 0]} barSize={statPeriod === 'daily' ? 12 : 30} />
+                          <Bar dataKey="revenue" fill="#0F172A" radius={[4, 4, 0, 0]} barSize={statPeriod === 'daily' ? 12 : 24} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
                   </div>
 
-                  <div className="analysis-card">
-                    <div className="flex items-center justify-between mb-4 gap-3">
-                      <h3 className="text-[12px] font-bold uppercase text-secondary">Product Distribution</h3>
-                    </div>
-                    <div className="h-56 w-full relative">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <RePieChart>
-                          <Pie
-                            data={salesByType}
-                            innerRadius={55}
-                            outerRadius={80}
-                            paddingAngle={8}
-                            dataKey="value"
-                            stroke="none"
-                          >
-                            {salesByType.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip
-                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
-                            formatter={(value: any) => formatCurrency(Number(value))}
-                          />
-                        </RePieChart>
-                      </ResponsiveContainer>
-                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                        <span className="text-[10px] uppercase font-bold text-secondary">Total</span>
-                        <span className="text-[14px] font-bold text-primary">{formatCurrency(analysisStats.revenue).split(',')[0]}</span>
+                  {/* NEW FEATURE: Rekap Penjualan Per Produk & Ukuran (Replaces Riwayat Periode) */}
+                  <div className="analysis-card space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <Award size={16} className="text-slate-800" />
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                          Rekap Penjualan Per Produk & Ukuran
+                        </h3>
                       </div>
+                      <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
+                        {variantBreakdown.length} Varian
+                      </span>
                     </div>
-                    <div className="flex justify-center gap-4 mt-2">
-                      {salesByType.map((entry, index) => (
-                        <div key={entry.name} className="flex items-center gap-1.5">
-                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
-                          <span className="text-[10px] font-bold uppercase text-secondary">{entry.name}</span>
+
+                    <div className="space-y-3">
+                      {variantBreakdown.map((item, index) => (
+                        <div key={`${item.type}_${item.weight}`} className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <div className="flex items-center gap-2">
+                              <span className="w-5 h-5 rounded-full bg-slate-900 text-white font-bold text-[10px] flex items-center justify-center">
+                                #{index + 1}
+                              </span>
+                              <span className={cn(
+                                "px-2 py-0.5 rounded text-[10px] font-extrabold uppercase",
+                                item.type === 'hijau' ? "bg-emerald-100 text-emerald-800 border border-emerald-200" :
+                                item.type === 'bitumax' ? "bg-amber-100 text-amber-800 border border-amber-200" :
+                                "bg-slate-200 text-slate-900 border border-slate-300"
+                              )}>
+                                {item.type}
+                              </span>
+                              <span className="font-bold text-xs text-slate-900">{item.weight} kg</span>
+                            </div>
+
+                            <div className="text-right">
+                              <span className="font-extrabold text-xs text-slate-900 block">{formatCurrency(item.revenue)}</span>
+                              <span className="text-[10px] text-slate-500 font-semibold">{item.quantity} Pcs</span>
+                            </div>
+                          </div>
+
+                          {/* Progress bar percentage */}
+                          <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden mt-2">
+                            <div
+                              className={cn(
+                                "h-full rounded-full transition-all duration-300",
+                                item.type === 'hijau' ? "bg-emerald-500" :
+                                item.type === 'bitumax' ? "bg-amber-500" :
+                                "bg-slate-800"
+                              )}
+                              style={{ width: `${Math.max(5, item.percentage)}%` }}
+                            />
+                          </div>
+                          <div className="flex justify-between items-center text-[10px] text-slate-500 mt-1">
+                            <span>Wajib Setor: <strong>{formatCurrency(item.cost)}</strong></span>
+                            <span>Kontribusi: <strong>{item.percentage}%</strong></span>
+                          </div>
                         </div>
                       ))}
-                    </div>
-                  </div>
 
-                  <div className="analysis-card">
-                    <div className="flex items-start justify-between gap-3 mb-4">
+                      {variantBreakdown.length === 0 && (
+                        <div className="py-8 text-center bg-slate-50 rounded-xl border border-slate-200">
+                          <p className="text-slate-500 text-xs font-medium">Belum ada data penjualan pada periode ini</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Quick Print Card */}
+                    <div className="bg-slate-900 text-white p-4 rounded-xl flex items-center justify-between mt-4">
                       <div>
-                        <h3 className="text-[12px] font-bold uppercase text-secondary">Timeline History</h3>
-                        <p className="text-[11px] text-secondary mt-1">Ringkasan history penjualan per {statPeriod}.</p>
+                        <p className="text-xs font-bold">Cetak Laporan Reseller</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">
+                          {analysisMonth ? `Periode ${analysisMonth}` : 'Semua Penjualan Terdaftar'}
+                        </p>
                       </div>
                       <button
-                        type="button"
-                        onClick={() => setHistoryCollapsed((value) => !value)}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-border bg-bg px-3 py-2 text-[10px] font-bold uppercase text-secondary transition hover:bg-white"
+                        onClick={() => handlePrint(analysisMonth || undefined)}
+                        className="bg-white text-slate-900 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-100 transition-colors flex items-center gap-1.5"
                       >
-                        <span>{historyCollapsed ? 'Expand' : 'Minimize'}</span>
-                        <ChevronRight className={cn('transition-transform duration-200', historyCollapsed ? '' : 'rotate-90')} size={14} />
+                        <Printer size={14} />
+                        <span>Cetak Laporan</span>
                       </button>
                     </div>
-
-                    {!historyCollapsed && (
-                      <div className="space-y-4">
-                        <table className="hidden print:table print-table">
-                          <thead>
-                            <tr>
-                              <th>Period</th>
-                              <th>Transactions</th>
-                              <th>Revenue</th>
-                              <th>Deposit</th>
-                              <th>Fee (Profit)</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {[...salesByPeriod].reverse().map((item) => (
-                              <tr key={item.fullPeriod}>
-                                <td>{item.period}</td>
-                                <td>{item.count}</td>
-                                <td>{formatCurrency(item.revenue)}</td>
-                                <td>{formatCurrency(item.cost)}</td>
-                                <td className="text-success font-bold">{formatCurrency(item.fee)}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-
-                        <div className="print:hidden space-y-4">
-                          {[...salesByPeriod].reverse().map((item) => (
-                            <div key={item.fullPeriod} className="bg-bg p-4 rounded-[20px] border border-border">
-                              <div className="flex justify-between items-center mb-3">
-                                <span className="text-[14px] font-[800]">{item.period}</span>
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    onClick={() => handlePrint(item.fullPeriod)}
-                                    className="p-1.5 rounded-full hover:bg-white transition-colors text-primary border border-transparent hover:border-border"
-                                    title={`Print ${statPeriod === 'monthly' ? 'Monthly' : 'Daily'} Report`}
-                                  >
-                                    <Printer size={14} />
-                                  </button>
-                                  <span className="text-[10px] font-bold text-secondary uppercase bg-white px-2 py-1 rounded-full border border-border">
-                                    {item.count} Trans
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="grid grid-cols-3 gap-2">
-                                <div className="flex flex-col">
-                                  <span className="text-[9px] uppercase font-bold text-secondary">Revenue</span>
-                                  <span className="text-[12px] font-bold">{formatCurrency(item.revenue)}</span>
-                                </div>
-                                <div className="flex flex-col">
-                                  <span className="text-[9px] uppercase font-bold text-secondary">Setor</span>
-                                  <span className="text-[12px] font-bold">{formatCurrency(item.cost)}</span>
-                                </div>
-                                <div className="flex flex-col">
-                                  <span className="text-[9px] uppercase font-bold text-secondary">Fee</span>
-                                  <span className="text-[12px] font-bold text-success">{formatCurrency(item.fee)}</span>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </motion.div>
               )}
@@ -989,146 +882,140 @@ export default function BituCalcApp() {
               {activeTab === 'payment' && (
                 <motion.div
                   key="payment"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="space-y-5"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.15 }}
+                  className="space-y-4"
                 >
-                  <div className="bg-primary text-white p-6 rounded-[24px]">
-                    <div className="flex items-start justify-between gap-4">
+                  <div className="bg-slate-900 text-white p-5 rounded-2xl shadow-sm">
+                    <div className="flex justify-between items-start">
                       <div>
-                        <p className="text-success text-[10px] font-bold uppercase tracking-wider">Sisa Setoran</p>
-                        <h2 className="text-[28px] font-bold tracking-tight text-success">{formatCurrency(remainingPayment)}</h2>
+                        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Sisa Setoran Modal</p>
+                        <h2 className="text-2xl font-bold text-amber-400 mt-0.5">{formatCurrency(remainingPayment)}</h2>
                       </div>
-                      <div className="w-11 h-11 rounded-[16px] bg-white/10 flex items-center justify-center">
-                        <CreditCard size={20} className="text-success" />
+                      <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
+                        <CreditCard size={18} className="text-slate-200" />
                       </div>
                     </div>
 
-                    <div className="mt-5 h-2 rounded-full bg-white/10 overflow-hidden">
+                    <div className="mt-4 h-2 rounded-full bg-slate-800 overflow-hidden">
                       <div
-                        className="h-full bg-success rounded-full transition-all duration-500"
+                        className="h-full bg-emerald-500 rounded-full transition-all duration-300"
                         style={{ width: `${paymentProgress}%` }}
                       />
                     </div>
 
-                    <div className="mt-4 grid grid-cols-2 gap-3 text-[11px]">
-                      <div className="bg-white/5 p-3 rounded-[16px]">
-                        <span className="text-secondary uppercase font-bold block mb-1">Wajib Setor</span>
-                        <span className="font-medium text-[14px]">{formatCurrency(totalCost)}</span>
+                    <div className="mt-3 grid grid-cols-2 gap-3 text-xs pt-3 border-t border-slate-800">
+                      <div>
+                        <span className="text-slate-400 uppercase font-bold text-[10px] block mb-0.5">Wajib Setor</span>
+                        <span className="font-bold text-white">{formatCurrency(totalCost)}</span>
                       </div>
-                      <div className="bg-white/5 p-3 rounded-[16px]">
-                        <span className="text-secondary uppercase font-bold block mb-1">Sudah Setor</span>
-                        <span className="font-medium text-[14px]">{formatCurrency(totalPaid)}</span>
+                      <div>
+                        <span className="text-slate-400 uppercase font-bold text-[10px] block mb-0.5">Sudah Ditransfer</span>
+                        <span className="font-bold text-emerald-400">{formatCurrency(totalPaid)}</span>
                       </div>
                     </div>
-
-                    {overpaidPayment > 0 && (
-                      <div className="mt-3 rounded-[14px] bg-success/10 border border-success/20 px-3 py-2 text-[11px] font-bold text-success">
-                        Kelebihan setoran: {formatCurrency(overpaidPayment)}
-                      </div>
-                    )}
                   </div>
 
-                  <div className="analysis-card space-y-4">
+                  {/* Form Record Payment */}
+                  <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-[12px] uppercase font-bold text-secondary tracking-[0.5px]">Catat Setoran</span>
-                      <span className="text-[10px] font-bold uppercase text-secondary">{Math.round(paymentProgress)}% Paid</span>
+                      <span className="text-xs uppercase font-bold text-slate-500">Catat Transfer Setoran</span>
+                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
+                        {Math.round(paymentProgress)}% Terbayar
+                      </span>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <span className="text-[10px] font-bold uppercase text-secondary mb-2 block">Tanggal</span>
-                        <div className="bg-white px-3 py-2 rounded-[14px] flex items-center gap-2 border border-border h-[46px]">
-                          <Calendar size={15} className="text-secondary shrink-0" />
+                        <span className="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Tanggal</span>
+                        <div className="bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 h-9">
+                          <Calendar size={14} className="text-slate-400 shrink-0" />
                           <input
                             type="date"
                             value={paymentDate}
                             onChange={(e) => setPaymentDate(e.target.value)}
-                            className="w-full bg-transparent text-[12px] font-bold focus:outline-none"
+                            className="w-full bg-transparent text-xs font-bold text-slate-800 focus:outline-none"
                           />
                         </div>
                       </div>
+
                       <div>
-                        <span className="text-[10px] font-bold uppercase text-secondary mb-2 block">Jumlah</span>
-                        <div className="bg-white px-3 py-2 rounded-[14px] border border-border h-[46px] flex items-center">
+                        <span className="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Jumlah Transfer</span>
+                        <div className="bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-xl h-9 flex items-center">
                           <input
                             type="text"
                             inputMode="numeric"
                             value={formatNumberInput(paymentAmount)}
                             onChange={(e) => setPaymentAmount(normalizeNumberInput(e.target.value))}
                             placeholder="Rp"
-                            className="w-full bg-transparent text-[13px] font-bold focus:outline-none"
+                            className="w-full bg-transparent text-xs font-bold text-slate-800 focus:outline-none"
                           />
                         </div>
                       </div>
                     </div>
 
                     <div>
-                      <span className="text-[10px] font-bold uppercase text-secondary mb-2 block">Catatan</span>
-                      <div className="bg-white px-3 py-2 rounded-[14px] border border-border h-[46px] flex items-center">
+                      <span className="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Catatan / Bukti</span>
+                      <div className="bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-xl h-9 flex items-center">
                         <input
                           type="text"
                           value={paymentNote}
                           onChange={(e) => setPaymentNote(e.target.value)}
-                          placeholder="Nama penjual / catatan"
-                          className="w-full bg-transparent text-[13px] font-bold focus:outline-none"
+                          placeholder="Catatan transfer..."
+                          className="w-full bg-transparent text-xs font-bold text-slate-800 focus:outline-none"
                         />
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-[auto_1fr] gap-2">
+                    <div className="grid grid-cols-[auto_1fr] gap-2 pt-1">
                       <button
                         type="button"
                         onClick={() => setPaymentAmount(String(Math.round(remainingPayment)))}
                         disabled={remainingPayment <= 0}
-                        className="px-4 py-3 rounded-[14px] border border-border bg-white text-[11px] font-bold uppercase text-secondary disabled:opacity-40"
+                        className="px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700 disabled:opacity-40 hover:bg-slate-100"
                       >
                         Isi Sisa
                       </button>
                       <button
                         type="button"
                         onClick={handleAddPayment}
-                        className="bg-primary text-white py-3 rounded-[14px] font-bold hover:opacity-90 transition-opacity text-[13px]"
+                        className="bg-slate-900 text-white py-2 rounded-xl font-bold hover:bg-slate-800 transition-all text-xs shadow-sm"
                       >
                         Simpan Setoran
                       </button>
                     </div>
                   </div>
 
+                  {/* Payment List */}
                   <div>
-                    <div className="flex items-center justify-between">
-                      <span className="section-label">Riwayat Setoran</span>
-                      <div className="text-[10px] font-bold text-secondary uppercase tracking-widest">
-                        {payments.length} Items
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
+                    <span className="text-xs uppercase font-bold text-slate-500 block mb-2">Riwayat Transfer</span>
+                    <div className="space-y-2">
                       {payments.map((payment) => (
-                        <div key={payment.id} className="bg-bg p-4 rounded-[16px] flex items-center justify-between gap-4">
-                          <div className="min-w-0">
-                            <p className="text-[14px] font-bold">{payment.note || 'Setoran'}</p>
-                            <p className="text-[11px] text-secondary">
+                        <div key={payment.id} className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-sm flex items-center justify-between text-xs">
+                          <div>
+                            <p className="font-bold text-slate-900">{payment.note || 'Transfer Setoran'}</p>
+                            <p className="text-[11px] text-slate-500">
                               {new Date(payment.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                             </p>
                           </div>
-                          <div className="flex items-center gap-3 shrink-0">
-                            <p className="text-[14px] font-bold text-success">{formatCurrency(Number(payment.amount) || 0)}</p>
+                          <div className="flex items-center gap-3">
+                            <span className="font-bold text-emerald-600">{formatCurrency(Number(payment.amount) || 0)}</span>
                             <button
                               onClick={() => setDeletePaymentConfirmId(payment.id)}
-                              className="text-secondary hover:text-red-500 transition-colors"
+                              className="text-slate-400 hover:text-rose-500 transition-colors"
                               title="Hapus setoran"
                             >
-                              <Trash2 size={14} />
+                              <Trash2 size={15} />
                             </button>
                           </div>
                         </div>
                       ))}
 
                       {payments.length === 0 && (
-                        <div className="py-12 text-center">
-                          <p className="text-secondary text-[13px] font-medium">Belum ada data setoran</p>
+                        <div className="py-10 text-center bg-white rounded-xl border border-slate-200">
+                          <p className="text-slate-500 text-xs">Belum ada riwayat setoran</p>
                         </div>
                       )}
                     </div>
@@ -1139,62 +1026,74 @@ export default function BituCalcApp() {
               {activeTab === 'history' && (
                 <motion.div
                   key="history"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.15 }}
                   className="space-y-3"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="section-label">Recent Sales</span>
-                    <div className="text-[10px] font-bold text-secondary uppercase tracking-widest">
-                      {filteredSales.length} Items
-                    </div>
+                    <span className="text-xs uppercase font-bold text-slate-500">Daftar Transaksi</span>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase">
+                      {filteredSales.length} Transaksi
+                    </span>
                   </div>
 
-                  {/* Date Filter */}
-                  <div className="bg-bg p-3 rounded-[16px] flex items-center gap-3 border border-border">
-                    <Calendar size={16} className="text-secondary" />
+                  {/* Filter Date */}
+                  <div className="bg-white p-2.5 rounded-xl flex items-center gap-2 border border-slate-200 shadow-sm">
+                    <Calendar size={15} className="text-slate-400" />
                     <input
                       type="date"
                       value={filterDate}
                       onChange={(e) => setFilterDate(e.target.value)}
-                      className="flex-1 bg-transparent text-[13px] font-medium focus:outline-none"
+                      className="flex-1 bg-transparent text-xs font-bold text-slate-800 focus:outline-none"
                     />
                     {filterDate && (
                       <button
                         onClick={() => setFilterDate('')}
-                        className="text-[10px] font-bold uppercase text-secondary hover:text-primary"
+                        className="text-[10px] font-bold uppercase text-slate-500 hover:text-slate-900"
                       >
-                        Clear
+                        Reset
                       </button>
                     )}
                   </div>
 
-                  <div className="space-y-3 mt-4">
+                  {/* Items */}
+                  <div className="space-y-2">
                     {filteredSales.map((sale) => (
-                      <div key={sale.id} className="bg-bg p-4 rounded-[16px] flex items-center justify-between group">
+                      <div key={sale.id} className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-sm flex items-center justify-between text-xs">
                         <div>
-                          <p className="text-[14px] font-bold capitalize">{sale.type} {Number(sale.weight)}kg</p>
-                          <p className="text-[11px] text-secondary">
-                            {new Date(sale.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })} • Qty: {sale.quantity}
+                          <div className="flex items-center gap-1.5">
+                            <span className={cn(
+                              "px-1.5 py-0.5 rounded text-[9px] font-bold uppercase",
+                              sale.type === 'hijau' ? "bg-emerald-50 text-emerald-800 border border-emerald-200" :
+                              sale.type === 'bitumax' ? "bg-amber-50 text-amber-800 border border-amber-200" :
+                              "bg-slate-100 text-slate-800 border border-slate-200"
+                            )}>
+                              {sale.type}
+                            </span>
+                            <span className="font-bold text-slate-900">{sale.weight} kg</span>
+                          </div>
+                          <p className="text-[11px] text-slate-500 mt-1">
+                            {new Date(sale.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })} • Qty: {sale.quantity} Pcs
                           </p>
-                          <p className="text-[10px] text-success font-bold mt-1">Fee: {formatCurrency(sale.totalPrice - sale.totalCost)}</p>
                         </div>
+
                         <div className="flex items-center gap-3">
-                          <p className="text-[14px] font-bold">{formatCurrency(sale.totalPrice)}</p>
+                          <span className="font-bold text-slate-900">{formatCurrency(sale.totalPrice)}</span>
                           <button
                             onClick={() => setDeleteConfirmId(sale.id)}
-                            className="text-secondary hover:text-red-500 transition-colors"
+                            className="text-slate-400 hover:text-rose-500 transition-colors"
                           >
-                            <Trash2 size={14} />
+                            <Trash2 size={15} />
                           </button>
                         </div>
                       </div>
                     ))}
 
                     {filteredSales.length === 0 && (
-                      <div className="py-12 text-center">
-                        <p className="text-secondary text-[13px] font-medium">Tidak ada data untuk tanggal ini</p>
+                      <div className="py-10 text-center bg-white rounded-xl border border-slate-200">
+                        <p className="text-slate-500 text-xs">Tidak ada transaksi ditemukan</p>
                       </div>
                     )}
                   </div>
@@ -1203,86 +1102,110 @@ export default function BituCalcApp() {
             </AnimatePresence>
           </div>
 
-          {/* Navigation Bar */}
-          <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-4xl bg-white/90 backdrop-blur-md border-t border-border px-4 py-4 flex items-center justify-around z-50 no-print shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+          {/* Floating Bottom Navigation Bar */}
+          <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-1 flex items-center justify-around z-50 no-print shadow-lg">
             <button
               onClick={() => setActiveTab('calculator')}
               className={cn(
-                "flex flex-col items-center gap-1 transition-all",
-                activeTab === 'calculator' ? "text-primary" : "text-secondary"
+                "flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition-all relative",
+                activeTab === 'calculator' ? "text-slate-900 font-bold" : "text-slate-400 hover:text-slate-700"
               )}
             >
-              <Calculator size={20} />
-              <span className="text-[10px] font-bold uppercase">Calc</span>
+              {activeTab === 'calculator' && (
+                <motion.div layoutId="activeTab" className="absolute inset-0 bg-slate-100 rounded-xl" />
+              )}
+              <span className="relative z-10 flex flex-col items-center gap-0.5">
+                <Calculator size={17} />
+                <span className="text-[10px] uppercase font-bold tracking-wider">Input</span>
+              </span>
             </button>
+
             <button
               onClick={() => setActiveTab('analysis')}
               className={cn(
-                "flex flex-col items-center gap-1 transition-all",
-                activeTab === 'analysis' ? "text-primary" : "text-secondary"
+                "flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition-all relative",
+                activeTab === 'analysis' ? "text-slate-900 font-bold" : "text-slate-400 hover:text-slate-700"
               )}
             >
-              <BarChart3 size={20} />
-              <span className="text-[10px] font-bold uppercase">Stats</span>
+              {activeTab === 'analysis' && (
+                <motion.div layoutId="activeTab" className="absolute inset-0 bg-slate-100 rounded-xl" />
+              )}
+              <span className="relative z-10 flex flex-col items-center gap-0.5">
+                <BarChart3 size={17} />
+                <span className="text-[10px] uppercase font-bold tracking-wider">Stats</span>
+              </span>
             </button>
+
             <button
               onClick={() => setActiveTab('payment')}
               className={cn(
-                "flex flex-col items-center gap-1 transition-all",
-                activeTab === 'payment' ? "text-primary" : "text-secondary"
+                "flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition-all relative",
+                activeTab === 'payment' ? "text-slate-900 font-bold" : "text-slate-400 hover:text-slate-700"
               )}
             >
-              <CreditCard size={20} />
-              <span className="text-[10px] font-bold uppercase">Payment</span>
+              {activeTab === 'payment' && (
+                <motion.div layoutId="activeTab" className="absolute inset-0 bg-slate-100 rounded-xl" />
+              )}
+              <span className="relative z-10 flex flex-col items-center gap-0.5">
+                <CreditCard size={17} />
+                <span className="text-[10px] uppercase font-bold tracking-wider">Setoran</span>
+              </span>
             </button>
+
             <button
               onClick={() => setActiveTab('history')}
               className={cn(
-                "flex flex-col items-center gap-1 transition-all",
-                activeTab === 'history' ? "text-primary" : "text-secondary"
+                "flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition-all relative",
+                activeTab === 'history' ? "text-slate-900 font-bold" : "text-slate-400 hover:text-slate-700"
               )}
             >
-              <History size={20} />
-              <span className="text-[10px] font-bold uppercase">Log</span>
+              {activeTab === 'history' && (
+                <motion.div layoutId="activeTab" className="absolute inset-0 bg-slate-100 rounded-xl" />
+              )}
+              <span className="relative z-10 flex flex-col items-center gap-0.5">
+                <History size={17} />
+                <span className="text-[10px] uppercase font-bold tracking-wider">Riwayat</span>
+              </span>
             </button>
           </nav>
         </div>
       </div>
-      {/* Custom Delete Confirmation Modal */}
+
+      {/* Delete Sale Confirmation Modal */}
       <AnimatePresence>
         {deleteConfirmId && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 no-print">
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 no-print">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setDeleteConfirmId(null)}
-              className="absolute inset-0 bg-primary/40 backdrop-blur-sm"
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs"
             />
             <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative bg-white w-full max-w-[320px] rounded-[24px] p-6 shadow-2xl overflow-hidden"
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              className="relative bg-white border border-slate-200 w-full max-w-xs rounded-2xl p-5 shadow-xl overflow-hidden"
             >
               <div className="flex flex-col items-center text-center">
-                <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mb-4">
-                  <AlertTriangle className="text-red-500" size={24} />
+                <div className="w-10 h-10 bg-rose-50 border border-rose-100 rounded-xl flex items-center justify-center mb-3">
+                  <AlertTriangle className="text-rose-500" size={20} />
                 </div>
-                <h3 className="text-[18px] font-bold text-primary mb-1">Hapus Data?</h3>
-                <p className="text-secondary text-[13px] leading-relaxed mb-6">
-                  Apakah Anda yakin ingin menghapus data penjualan ini? Tindakan ini tidak dapat dibatalkan.
+                <h3 className="text-sm font-bold text-slate-900 mb-1">Hapus Data Penjualan?</h3>
+                <p className="text-slate-500 text-xs leading-relaxed mb-5">
+                  Data ini akan dihapus dari riwayat penjualan.
                 </p>
-                <div className="grid grid-cols-2 gap-3 w-full">
+                <div className="grid grid-cols-2 gap-2 w-full">
                   <button
                     onClick={() => setDeleteConfirmId(null)}
-                    className="py-3 rounded-[12px] border border-border font-bold text-secondary hover:bg-bg transition-colors text-[13px]"
+                    className="py-2 rounded-xl border border-slate-200 font-bold text-slate-600 hover:bg-slate-50 transition-colors text-xs"
                   >
                     Batal
                   </button>
                   <button
                     onClick={() => handleDeleteSale(deleteConfirmId)}
-                    className="py-3 rounded-[12px] bg-red-500 text-white font-bold hover:bg-red-600 transition-colors shadow-lg shadow-red-200 text-[13px]"
+                    className="py-2 rounded-xl bg-rose-600 text-white font-bold hover:bg-rose-700 transition-colors shadow-sm text-xs"
                   >
                     Hapus
                   </button>
@@ -1292,40 +1215,42 @@ export default function BituCalcApp() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Delete Payment Confirmation Modal */}
       <AnimatePresence>
         {deletePaymentConfirmId && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 no-print">
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 no-print">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setDeletePaymentConfirmId(null)}
-              className="absolute inset-0 bg-primary/40 backdrop-blur-sm"
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs"
             />
             <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative bg-white w-full max-w-[320px] rounded-[24px] p-6 shadow-2xl overflow-hidden"
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              className="relative bg-white border border-slate-200 w-full max-w-xs rounded-2xl p-5 shadow-xl overflow-hidden"
             >
               <div className="flex flex-col items-center text-center">
-                <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mb-4">
-                  <AlertTriangle className="text-red-500" size={24} />
+                <div className="w-10 h-10 bg-rose-50 border border-rose-100 rounded-xl flex items-center justify-center mb-3">
+                  <AlertTriangle className="text-rose-500" size={20} />
                 </div>
-                <h3 className="text-[18px] font-bold text-primary mb-1">Hapus Setoran?</h3>
-                <p className="text-secondary text-[13px] leading-relaxed mb-6">
-                  Apakah Anda yakin ingin menghapus data setoran ini? Tindakan ini tidak dapat dibatalkan.
+                <h3 className="text-sm font-bold text-slate-900 mb-1">Hapus Data Setoran?</h3>
+                <p className="text-slate-500 text-xs leading-relaxed mb-5">
+                  Data transfer ini akan dihapus dari riwayat pembayaran.
                 </p>
-                <div className="grid grid-cols-2 gap-3 w-full">
+                <div className="grid grid-cols-2 gap-2 w-full">
                   <button
                     onClick={() => setDeletePaymentConfirmId(null)}
-                    className="py-3 rounded-[12px] border border-border font-bold text-secondary hover:bg-bg transition-colors text-[13px]"
+                    className="py-2 rounded-xl border border-slate-200 font-bold text-slate-600 hover:bg-slate-50 transition-colors text-xs"
                   >
                     Batal
                   </button>
                   <button
                     onClick={() => handleDeletePayment(deletePaymentConfirmId)}
-                    className="py-3 rounded-[12px] bg-red-500 text-white font-bold hover:bg-red-600 transition-colors shadow-lg shadow-red-200 text-[13px]"
+                    className="py-2 rounded-xl bg-rose-600 text-white font-bold hover:bg-rose-700 transition-colors shadow-sm text-xs"
                   >
                     Hapus
                   </button>
