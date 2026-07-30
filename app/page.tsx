@@ -38,7 +38,7 @@ import {
   LineChart,
   Line
 } from 'recharts';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { PrintReportModern } from '@/components/PrintReportModern';
@@ -767,30 +767,32 @@ export default function BituCalcApp() {
                       Grafik Penjualan ({statPeriod})
                     </h3>
                     <div className="h-48 w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={salesByPeriod} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-                          <XAxis
-                            dataKey="period"
-                            axisLine={false}
-                            tickLine={false}
-                            tick={{ fontSize: 9, fill: '#64748B', fontWeight: 600 }}
-                            dy={5}
-                          />
-                          <YAxis
-                            axisLine={false}
-                            tickLine={false}
-                            tick={{ fontSize: 9, fill: '#64748B' }}
-                            tickFormatter={(value) => `Rp${value / 1000}k`}
-                          />
-                          <Tooltip
-                            cursor={{ fill: '#F8FAFC' }}
-                            contentStyle={{ backgroundColor: '#FFFFFF', borderRadius: '12px', border: '1px solid #E2E8F0', fontSize: '12px', color: '#0F172A' }}
-                            formatter={(value: any) => [formatCurrency(Number(value)), 'Total']}
-                          />
-                          <Bar dataKey="revenue" fill="#0F172A" radius={[4, 4, 0, 0]} barSize={statPeriod === 'daily' ? 12 : 24} />
-                        </BarChart>
-                      </ResponsiveContainer>
+                      {isMounted && (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={salesByPeriod} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                            <XAxis
+                              dataKey="period"
+                              axisLine={false}
+                              tickLine={false}
+                              tick={{ fontSize: 9, fill: '#64748B', fontWeight: 600 }}
+                              dy={5}
+                            />
+                            <YAxis
+                              axisLine={false}
+                              tickLine={false}
+                              tick={{ fontSize: 9, fill: '#64748B' }}
+                              tickFormatter={(value) => `Rp${value / 1000}k`}
+                            />
+                            <Tooltip
+                              cursor={{ fill: '#F8FAFC' }}
+                              contentStyle={{ backgroundColor: '#FFFFFF', borderRadius: '12px', border: '1px solid #E2E8F0', fontSize: '12px', color: '#0F172A' }}
+                              formatter={(value: any) => [formatCurrency(Number(value)), 'Total']}
+                            />
+                            <Bar dataKey="revenue" fill="#0F172A" radius={[4, 4, 0, 0]} barSize={statPeriod === 'daily' ? 12 : 24} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      )}
                     </div>
                   </div>
 

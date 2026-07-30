@@ -1,8 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
 import './globals.css';
-
-const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'Aspal - Sales & Analysis',
@@ -16,7 +13,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#111827',
+  themeColor: '#0F172A',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -25,9 +22,9 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={inter.className}>
+    <html lang="en">
       <head>
-        <meta name="theme-color" content="#111827" />
+        <meta name="theme-color" content="#0F172A" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <link rel="apple-touch-icon" href="/icon-192x192.png" />
