@@ -333,12 +333,10 @@ export default function BituCalcApp() {
 
   const handlePrint = (month?: string) => {
     const reportMonth = month !== undefined ? month : (analysisMonth || null);
-
-    flushSync(() => {
-      setPrintingMonth(reportMonth);
-    });
-
-    window.print();
+    setPrintingMonth(reportMonth);
+    setTimeout(() => {
+      window.print();
+    }, 50);
   };
 
   const salesToPrint = useMemo(() => {
