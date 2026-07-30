@@ -243,7 +243,7 @@ export const PrintReportModern: React.FC<PrintReportModernProps> = ({
                     }`}>
                       {sale.type}
                     </span>
-                    <span className="text-slate-600">({sale.weight} kg)</span>
+                    <span className="text-slate-600">({Number(sale.weight)} kg)</span>
                   </td>
                   <td className="p-2.5 text-center font-extrabold text-slate-900">{sale.quantity} Pcs</td>
                   <td className="p-2.5 text-right tabular-nums text-slate-600">{formatCurrency(unitModal)}</td>
