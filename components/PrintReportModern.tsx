@@ -45,11 +45,12 @@ export const PrintReportModern: React.FC<PrintReportModernProps> = ({
     const map: Record<string, { type: string; weight: number; qty: number; cost: number }> = {};
 
     sortedSalesToPrint.forEach((sale) => {
-      const key = `${sale.type.toUpperCase()}_${sale.weight}kg`;
+      const normWeight = Number(sale.weight);
+      const key = `${sale.type.toUpperCase()}_${normWeight}kg`;
       if (!map[key]) {
         map[key] = {
           type: sale.type,
-          weight: sale.weight,
+          weight: normWeight,
           qty: 0,
           cost: 0,
         };
@@ -187,7 +188,7 @@ export const PrintReportModern: React.FC<PrintReportModernProps> = ({
                     }`}>
                       {item.type}
                     </span>
-                    <span className="text-[11px] font-bold text-slate-600">({item.weight}kg)</span>
+                    <span className="text-[11px] font-bold text-slate-600">({Number(item.weight)}kg)</span>
                   </div>
                   <div className="text-right">
                     <span className="font-extrabold text-slate-900 bg-slate-100 px-2 py-0.5 rounded text-[11px] inline-block">

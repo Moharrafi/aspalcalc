@@ -3,8 +3,15 @@ import pool from '@/lib/db';
 
 export async function GET() {
   try {
-    const [rows] = await pool.query(`SELECT id, DATE_FORMAT(date, '%Y-%m-%d') as date, type, weight, quantity, totalPrice, totalCost, createdAt FROM sales ORDER BY date DESC, createdAt DESC`);
-    return NextResponse.json(rows);
+    const [rows]: any = await pool.query(`SELECT id, DATE_FORMAT(date, '%Y-%m-%d') as date, type, weight, quantity, totalPrice, totalCost, createdAt FROM sales ORDER BY date DESC, createdAt DESC`);
+    const formattedRows = rows.map((row: any) => ({
+      ...row,
+      weight: Number(row.weight),
+      quantity: Number(row.quantity),
+      totalPrice: Number(row.totalPrice),
+      totalCost: Number(row.totalCost)
+    }));
+    return NextResponse.json(formattedRows);
   } catch (error: any) {
     console.error('Database error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
