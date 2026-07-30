@@ -160,26 +160,10 @@ export const PrintReportModern: React.FC<PrintReportModernProps> = ({
               {remainingModal > 0 ? formatCurrency(remainingModal) : 'Rp 0 (LUNAS)'}
             </p>
             <p className="text-[9px] mt-1 font-semibold">
-              {isFullyPaid ? (
-                (printSummary.carryOver && printSummary.carryOver > 0)
-                  ? `+ ${formatCurrency(printSummary.carryOver)} lebih bayar`
-                  : 'Setoran sudah lunas'
-              ) : 'Belum ditransfer'}
+              {isFullyPaid ? 'Setoran sudah lunas' : 'Belum ditransfer'}
             </p>
           </div>
         </div>
-
-        {/* Informational Banner for Excess Payment Carry-Over */}
-        {printSummary.carryOver !== undefined && printSummary.carryOver > 0 && (
-          <div className="mt-2.5 p-2 px-3 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center justify-between text-xs">
-            <span className="font-semibold text-emerald-800 text-[11px]">
-              💡 <strong>Informasi Lebih Bayar:</strong> Pak Jaja mentransfer melebihi tagihan bulan ini sebesar <strong className="text-emerald-950 font-extrabold">{formatCurrency(printSummary.carryOver)}</strong>.
-            </span>
-            <span className="text-[10px] font-extrabold text-emerald-700 uppercase bg-emerald-100 px-2 py-0.5 rounded border border-emerald-300">
-              Kredit Bulan Berikutnya
-            </span>
-          </div>
-        )}
       </div>
 
       {/* Product Volume Breakdown Summary */}
