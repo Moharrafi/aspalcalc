@@ -34,11 +34,16 @@ export const PrintReportModern: React.FC<PrintReportModernProps> = ({
   salesToPrint,
   formatCurrency,
 }) => {
-  // Compute Product Breakdown Summary (using baseline price as modal)
+  // Sort transactions ascending by date (Tanggal 1 -> 31)
+  const sortedSalesToPrint = useMemo(() => {
+    return [...salesToPrint].sort((a, b) => a.date.localeCompare(b.date));
+  }, [salesToPrint]);
+
+  // Compute Product Breakdown Summary
   const productSummary = useMemo(() => {
     const map: Record<string, { type: string; weight: number; qty: number; cost: number }> = {};
 
-    salesToPrint.forEach((sale) => {
+    sortedSalesToPrint.forEach((sale) => {
       const key = `${sale.type.toUpperCase()}_${sale.weight}kg`;
       if (!map[key]) {
         map[key] = {
@@ -49,11 +54,11 @@ export const PrintReportModern: React.FC<PrintReportModernProps> = ({
         };
       }
       map[key].qty += sale.quantity;
-      map[key].cost += sale.totalPrice; // Using baseline price as modal for now
+      map[key].cost += (sale.totalCost || sale.totalPrice);
     });
 
     return Object.values(map);
-  }, [salesToPrint]);
+  }, [sortedSalesToPrint]);
 
   const formattedPeriod = useMemo(() => {
     if (!printingMonth) return '';
@@ -63,11 +68,10 @@ export const PrintReportModern: React.FC<PrintReportModernProps> = ({
   }, [printingMonth]);
 
   const totalQuantity = useMemo(() => {
-    return salesToPrint.reduce((acc, curr) => acc + curr.quantity, 0);
-  }, [salesToPrint]);
+    return sortedSalesToPrint.reduce((acc, curr) => acc + curr.quantity, 0);
+  }, [sortedSalesToPrint]);
 
-  // Using revenue (baseline prices: 33k for 1kg, etc.) as total modal setoran
-  const totalModalCost = printSummary.revenue;
+  const totalModalCost = printSummary.cost || printSummary.revenue;
   const remainingModal = Math.max(0, totalModalCost - printSummary.paid);
   const isFullyPaid = remainingModal <= 0;
 
@@ -206,10 +210,9 @@ export const PrintReportModern: React.FC<PrintReportModernProps> = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200">
-            {salesToPrint.map((sale, index) => {
-              // Use sale.totalPrice (e.g. 33k for 1kg) as the unit modal for report
-              const unitModal = sale.quantity > 0 ? sale.totalPrice / sale.quantity : 0;
-              const saleModalTotal = sale.totalPrice;
+            {sortedSalesToPrint.map((sale, index) => {
+              const saleModalTotal = sale.totalCost || sale.totalPrice;
+              const unitModal = sale.quantity > 0 ? saleModalTotal / sale.quantity : 0;
 
               return (
                 <tr key={sale.id} className={index % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'}>
