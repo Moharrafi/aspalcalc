@@ -17,6 +17,7 @@ interface PrintSummary {
   paid: number;
   remaining: number;
   overpaid: number;
+  carryOver?: number;
 }
 
 interface PrintReportModernProps {
@@ -141,11 +142,11 @@ export const PrintReportModern: React.FC<PrintReportModernProps> = ({
             <p className="text-[9px] text-slate-400 mt-0.5">Total kewajiban modal</p>
           </div>
 
-          {/* Card 3: Sudah Ditransfer */}
+          {/* Card 3: Sudah Ditransfer / Alokasi */}
           <div className="p-3.5 bg-sky-50/80 rounded-xl border border-sky-200">
             <p className="text-[10px] font-bold uppercase text-sky-800 mb-0.5">Sudah Ditransfer</p>
             <p className="text-base font-bold text-sky-900 tabular-nums">{formatCurrency(printSummary.paid)}</p>
-            <p className="text-[9px] text-sky-700 mt-1">Setoran masuk ke pusat</p>
+            <p className="text-[9px] text-sky-700 mt-1">Alokasi setoran bulan ini</p>
           </div>
 
           {/* Card 4: Sisa Tagihan Setoran */}
@@ -159,10 +160,26 @@ export const PrintReportModern: React.FC<PrintReportModernProps> = ({
               {remainingModal > 0 ? formatCurrency(remainingModal) : 'Rp 0 (LUNAS)'}
             </p>
             <p className="text-[9px] mt-1 font-semibold">
-              {isFullyPaid ? 'Setoran sudah lunas' : 'Belum ditransfer'}
+              {isFullyPaid ? (
+                (printSummary.carryOver && printSummary.carryOver > 0)
+                  ? `+ ${formatCurrency(printSummary.carryOver)} lebih bayar`
+                  : 'Setoran sudah lunas'
+              ) : 'Belum ditransfer'}
             </p>
           </div>
         </div>
+
+        {/* Informational Banner for Excess Payment Carry-Over */}
+        {printSummary.carryOver !== undefined && printSummary.carryOver > 0 && (
+          <div className="mt-2.5 p-2 px-3 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center justify-between text-xs">
+            <span className="font-semibold text-emerald-800 text-[11px]">
+              💡 <strong>Informasi Lebih Bayar:</strong> Pak Jaja mentransfer melebihi tagihan bulan ini sebesar <strong className="text-emerald-950 font-extrabold">{formatCurrency(printSummary.carryOver)}</strong>.
+            </span>
+            <span className="text-[10px] font-extrabold text-emerald-700 uppercase bg-emerald-100 px-2 py-0.5 rounded border border-emerald-300">
+              Kredit Bulan Berikutnya
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Product Volume Breakdown Summary */}

@@ -351,17 +351,44 @@ export default function BituCalcApp() {
 
   const printSummary = useMemo(() => {
     const revenue = salesToPrint.reduce((acc, s) => acc + (Number(s.totalPrice) || 0), 0);
-    const cost = salesToPrint.reduce((acc, s) => acc + (Number(s.totalCost) || 0), 0);
-    const paid = paymentsToPrint.reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
+    const cost = salesToPrint.reduce((acc, s) => acc + (Number(s.totalCost) || Number(s.totalPrice) || 0), 0);
+
+    let paid = 0;
+    let remaining = 0;
+    let carryOver = 0;
+
+    if (!printingMonth) {
+      const totalPaidAll = payments.reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
+      const totalCostAll = sales.reduce((acc, s) => acc + (Number(s.totalCost) || Number(s.totalPrice) || 0), 0);
+      paid = Math.min(cost, totalPaidAll);
+      remaining = Math.max(0, cost - totalPaidAll);
+      carryOver = Math.max(0, totalPaidAll - cost);
+    } else {
+      const priorSalesCost = sales
+        .filter(s => s.date.substring(0, 7) < printingMonth)
+        .reduce((acc, s) => acc + (Number(s.totalCost) || Number(s.totalPrice) || 0), 0);
+
+      const cumPaymentsUpToMonth = payments
+        .filter(p => p.date.substring(0, 7) <= printingMonth)
+        .reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
+
+      const availableForMonth = Math.max(0, cumPaymentsUpToMonth - priorSalesCost);
+
+      paid = Math.min(cost, availableForMonth);
+      remaining = Math.max(0, cost - availableForMonth);
+      carryOver = Math.max(0, availableForMonth - cost);
+    }
+
     return {
       revenue,
       cost,
       paid,
-      remaining: Math.max(cost - paid, 0),
-      overpaid: Math.max(paid - cost, 0),
+      remaining,
+      overpaid: carryOver,
+      carryOver,
       profit: revenue - cost
     };
-  }, [salesToPrint, paymentsToPrint]);
+  }, [sales, payments, salesToPrint, printingMonth]);
 
   // --- Analysis Computations ---
 
