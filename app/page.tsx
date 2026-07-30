@@ -518,11 +518,12 @@ export default function BituCalcApp() {
   const variantBreakdown = useMemo(() => {
     const map: Record<string, { type: ProductType; weight: number; quantity: number; revenue: number; cost: number }> = {};
     analysisSales.forEach((sale) => {
-      const key = `${sale.type}_${sale.weight}`;
+      const normWeight = Number(sale.weight);
+      const key = `${sale.type}_${normWeight}`;
       if (!map[key]) {
         map[key] = {
           type: sale.type,
-          weight: sale.weight,
+          weight: normWeight,
           quantity: 0,
           revenue: 0,
           cost: 0,
@@ -986,7 +987,7 @@ export default function BituCalcApp() {
                               )}>
                                 {item.type}
                               </span>
-                              <span className="font-bold text-xs text-slate-900">{item.weight} kg</span>
+                              <span className="font-bold text-xs text-slate-900">{Number(item.weight)} kg</span>
                             </div>
 
                             <div className="text-right">
@@ -1217,7 +1218,7 @@ export default function BituCalcApp() {
                             )}>
                               {sale.type}
                             </span>
-                            <span className="font-bold text-slate-900">{sale.weight} kg</span>
+                            <span className="font-bold text-slate-900">{Number(sale.weight)} kg</span>
                           </div>
                           <p className="text-[11px] text-slate-500 mt-1">
                             {new Date(sale.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })} • Qty: {sale.quantity} Pcs
