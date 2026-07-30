@@ -1236,13 +1236,15 @@ export default function BituCalcApp() {
                               <Pencil size={15} />
                             </button>
                           )}
-                          <button
-                            onClick={() => setDeleteConfirmId(sale.id)}
-                            className="text-slate-400 hover:text-rose-500 transition-colors p-1 rounded-md hover:bg-slate-100"
-                            title="Hapus transaksi"
-                          >
-                            <Trash2 size={15} />
-                          </button>
+                          {isAdmin && (
+                            <button
+                              onClick={() => setDeleteConfirmId(sale.id)}
+                              className="text-slate-400 hover:text-rose-500 transition-colors p-1 rounded-md hover:bg-slate-100"
+                              title="Hapus transaksi"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))}
