@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { flushSync } from 'react-dom';
 import {
   Plus,
   Trash2,
