@@ -53,8 +53,9 @@ export const PrintReportModern: React.FC<PrintReportModernProps> = ({
           cost: 0,
         };
       }
-      map[key].qty += sale.quantity;
-      map[key].cost += (sale.totalCost || sale.totalPrice);
+      const saleCost = Number(sale.totalCost) || Number(sale.totalPrice) || 0;
+      map[key].qty += Number(sale.quantity) || 0;
+      map[key].cost += saleCost;
     });
 
     return Object.values(map);
@@ -171,22 +172,33 @@ export const PrintReportModern: React.FC<PrintReportModernProps> = ({
             2. Rekap Barang Diminta / Diambil
           </h2>
           <div className="grid grid-cols-3 gap-2 text-xs">
-            {productSummary.map((item, idx) => (
-              <div key={idx} className="bg-white p-2 rounded border border-slate-200 flex items-center justify-between">
-                <div>
-                  <span className="font-bold text-slate-800 uppercase">{item.type}</span>
-                  <span className="text-[10px] text-slate-500 ml-1">({item.weight}kg)</span>
+            {productSummary.map((item, idx) => {
+              const itemTypeLower = item.type.toLowerCase();
+              const itemCost = Number(item.cost) || 0;
+
+              return (
+                <div key={idx} className="bg-white p-2.5 rounded-lg border border-slate-200 flex items-center justify-between shadow-sm">
+                  <div className="flex items-center gap-1.5">
+                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-extrabold uppercase ${
+                      itemTypeLower === 'hijau' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
+                      itemTypeLower === 'hitam' ? 'bg-slate-900 text-white border border-slate-900' :
+                      'bg-amber-100 text-amber-800 border border-amber-200'
+                    }`}>
+                      {item.type}
+                    </span>
+                    <span className="text-[11px] font-bold text-slate-600">({item.weight}kg)</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-extrabold text-slate-900 bg-slate-100 px-2 py-0.5 rounded text-[11px] inline-block">
+                      {item.qty} Pcs
+                    </span>
+                    <p className="text-[10px] font-bold text-slate-600 mt-0.5">
+                      Setor: {formatCurrency(itemCost)}
+                    </p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <span className="font-extrabold text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded text-[11px]">
-                    {item.qty} Pcs
-                  </span>
-                  <p className="text-[9px] font-bold text-slate-600 mt-0.5">
-                    Setor: {formatCurrency(item.cost)}
-                  </p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -211,7 +223,8 @@ export const PrintReportModern: React.FC<PrintReportModernProps> = ({
           </thead>
           <tbody className="divide-y divide-slate-200">
             {sortedSalesToPrint.map((sale, index) => {
-              const saleModalTotal = sale.totalCost || sale.totalPrice;
+              const saleTypeLower = sale.type.toLowerCase();
+              const saleModalTotal = Number(sale.totalCost) || Number(sale.totalPrice) || 0;
               const unitModal = sale.quantity > 0 ? saleModalTotal / sale.quantity : 0;
 
               return (
@@ -222,9 +235,9 @@ export const PrintReportModern: React.FC<PrintReportModernProps> = ({
                   </td>
                   <td className="p-2.5 font-bold text-slate-800">
                     <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-extrabold uppercase mr-1.5 ${
-                      sale.type === 'hijau' ? 'bg-emerald-100 text-emerald-800' :
-                      sale.type === 'hitam' ? 'bg-slate-900 text-white' :
-                      'bg-amber-100 text-amber-800'
+                      saleTypeLower === 'hijau' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
+                      saleTypeLower === 'hitam' ? 'bg-slate-900 text-white border border-slate-900' :
+                      'bg-amber-100 text-amber-800 border border-amber-200'
                     }`}>
                       {sale.type}
                     </span>
