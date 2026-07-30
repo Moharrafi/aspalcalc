@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import { AuthProvider } from '@/components/AuthProvider';
 
 export const metadata: Metadata = {
-  title: 'Aspal - Sales & Analysis',
-  description: 'Mobile-friendly sales calculator and analysis tool.',
+  title: 'BituCalc - Sales & Analysis System',
+  description: 'Mobile-friendly sales calculator, reseller portal, and analysis tool.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
@@ -30,7 +31,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="apple-touch-icon" href="/icon-192x192.png" />
       </head>
       <body suppressHydrationWarning className="antialiased">
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
         <script
           dangerouslySetInnerHTML={{
             __html: `

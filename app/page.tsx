@@ -1,13 +1,17 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
+import { useAuth } from '@/components/AuthProvider';
+import { useRouter } from 'next/navigation';
 import {
   Plus,
+  Pencil,
   Trash2,
   TrendingUp,
   Package,
   Calendar,
   ChevronRight,
+  ChevronLeft,
   BarChart3,
   PieChart,
   History,
@@ -21,7 +25,11 @@ import {
   AlertCircle,
   AlertTriangle,
   Award,
-  BarChart2
+  BarChart2,
+  LogOut,
+  ShieldCheck,
+  Store,
+  UserCheck
 } from 'lucide-react';
 import {
   BarChart,
@@ -141,9 +149,18 @@ const calculatePricing = (type: ProductType, weight: number): { price: number; c
 };
 
 export default function BituCalcApp() {
+  const { user, loading: authLoading, logout } = useAuth();
+  const router = useRouter();
+
   const [sales, setSales] = useState<Sale[]>([]);
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, authLoading, router]);
 
   // Fetch from DB
   useEffect(() => {
@@ -202,6 +219,16 @@ export default function BituCalcApp() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deletePaymentConfirmId, setDeletePaymentConfirmId] = useState<string | null>(null);
 
+  // Edit State
+  const [editingSale, setEditingSale] = useState<Sale | null>(null);
+  const [editType, setEditType] = useState<ProductType>('hitam');
+  const [editWeight, setEditWeight] = useState<number>(1);
+  const [editQuantity, setEditQuantity] = useState<number>(1);
+  const [editDate, setEditDate] = useState<string>('');
+
+  const [historyPage, setHistoryPage] = useState<number>(1);
+  const ITEMS_PER_PAGE = 10;
+
   useEffect(() => {
     if (notification) {
       const timer = setTimeout(() => setNotification(null), 3000);
@@ -209,18 +236,49 @@ export default function BituCalcApp() {
     }
   }, [notification]);
 
+  useEffect(() => {
+    setHistoryPage(1);
+  }, [filterDate]);
+
   const filteredSales = useMemo(() => {
     if (!filterDate) return sales;
     return sales.filter(s => s.date === filterDate);
   }, [sales, filterDate]);
 
+  const totalHistoryPages = useMemo(() => {
+    return Math.ceil(filteredSales.length / ITEMS_PER_PAGE) || 1;
+  }, [filteredSales]);
+
+  const paginatedSales = useMemo(() => {
+    const start = (historyPage - 1) * ITEMS_PER_PAGE;
+    return filteredSales.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredSales, historyPage]);
+
   const effectiveWeight = useMemo(() => {
     return weight === 0 ? (parseFloat(customWeight) || 0) : weight;
   }, [weight, customWeight]);
 
-  const currentPrice = useMemo(() => {
-    return calculatePricing(selectedType, effectiveWeight).price * quantity;
-  }, [selectedType, effectiveWeight, quantity]);
+  const isReseller = user?.role === 'reseller';
+
+  const activeSellingUnitPrice = useMemo(() => {
+    return calculatePricing(selectedType, effectiveWeight).price;
+  }, [selectedType, effectiveWeight]);
+
+  const activeModalUnitPrice = useMemo(() => {
+    return calculatePricing(selectedType, effectiveWeight).cost;
+  }, [selectedType, effectiveWeight]);
+
+  const totalSaleRevenue = useMemo(() => {
+    return activeSellingUnitPrice * quantity;
+  }, [activeSellingUnitPrice, quantity]);
+
+  const totalSaleModal = useMemo(() => {
+    return activeModalUnitPrice * quantity;
+  }, [activeModalUnitPrice, quantity]);
+
+  const currentItemProfit = useMemo(() => {
+    return totalSaleRevenue - totalSaleModal;
+  }, [totalSaleRevenue, totalSaleModal]);
 
   const handleAddSale = async () => {
     if (effectiveWeight <= 0) {
@@ -228,15 +286,14 @@ export default function BituCalcApp() {
       return;
     }
 
-    const pricing = calculatePricing(selectedType, effectiveWeight);
     const newSale: Sale = {
       id: Math.random().toString(36).substring(7),
       date: saleDate || new Date().toISOString().split('T')[0],
       type: selectedType,
       weight: effectiveWeight,
       quantity,
-      totalPrice: pricing.price * quantity,
-      totalCost: pricing.cost * quantity,
+      totalPrice: totalSaleRevenue,
+      totalCost: totalSaleModal,
     };
 
     const prevSales = [...sales];
@@ -272,6 +329,51 @@ export default function BituCalcApp() {
     } catch (error) {
       setSales(prevSales);
       setNotification({ message: 'Gagal menghapus data di database!', type: 'error' });
+    }
+  };
+
+  const startEditSale = (sale: Sale) => {
+    const numWeight = Number(sale.weight);
+    const numQty = Number(sale.quantity);
+    setEditingSale(sale);
+    setEditType(sale.type);
+    setEditWeight(isNaN(numWeight) ? 1 : numWeight);
+    setEditQuantity(isNaN(numQty) ? 1 : numQty);
+    setEditDate(sale.date);
+  };
+
+  const handleUpdateSale = async () => {
+    if (!editingSale) return;
+
+    const pricing = calculatePricing(editType, editWeight);
+    const totalPrice = pricing.price * editQuantity;
+    const totalCost = pricing.cost * editQuantity;
+
+    const updatedSale: Sale = {
+      ...editingSale,
+      type: editType,
+      weight: editWeight,
+      quantity: editQuantity,
+      date: editDate,
+      totalPrice,
+      totalCost,
+    };
+
+    const prevSales = [...sales];
+    setSales(sales.map(s => s.id === editingSale.id ? updatedSale : s));
+    setEditingSale(null);
+    setNotification({ message: 'Transaksi berhasil diperbarui', type: 'success' });
+
+    try {
+      const response = await fetch('/api/sales', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedSale)
+      });
+      if (!response.ok) throw new Error();
+    } catch (error) {
+      setSales(prevSales);
+      setNotification({ message: 'Gagal memperbarui transaksi di database!', type: 'error' });
     }
   };
 
@@ -483,6 +585,17 @@ export default function BituCalcApp() {
 
   const COLORS = ['#F59E0B', '#10B981', '#475569'];
 
+  if (authLoading || !user) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center text-white">
+        <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+        <p className="mt-4 text-slate-400 text-sm font-medium">Memuat sistem Bitucalc...</p>
+      </div>
+    );
+  }
+
+  const isAdmin = user.role === 'admin';
+
   return (
     <>
       {/* --- Modern Reseller Print Report --- */}
@@ -521,21 +634,47 @@ export default function BituCalcApp() {
             )}
           </AnimatePresence>
 
-          {/* Top Brand Header */}
-          <header className="py-3 px-1 no-print flex items-center justify-between">
+          {/* Top Brand & Auth User Header */}
+          <header className="py-3 px-1 no-print flex items-center justify-between border-b border-slate-200/80 mb-3 pb-3">
             <div>
-              <h1 className="text-xl font-bold tracking-tight text-slate-900">Sales Calc</h1>
-              <p className="text-[12px] font-medium text-slate-500">Aspal Sales & Distribution</p>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-extrabold tracking-tight text-slate-900">BituCalc</h1>
+                <span className={cn(
+                  "text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full border flex items-center gap-1",
+                  isAdmin
+                    ? "bg-indigo-50 text-indigo-700 border-indigo-200"
+                    : "bg-amber-50 text-amber-700 border-amber-200"
+                )}>
+                  {isAdmin ? <ShieldCheck size={12} /> : <Store size={12} />}
+                  {isAdmin ? 'ADMIN' : 'RESELLER'}
+                </span>
+              </div>
+              <p className="text-[11px] font-medium text-slate-500 mt-0.5 flex items-center gap-1">
+                <span>Halo, <strong className="text-slate-800">{user.name}</strong></span>
+              </p>
             </div>
 
-            <button
-              onClick={() => handlePrint()}
-              className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all"
-              title="Cetak Laporan"
-            >
-              <Printer size={15} className="text-slate-600" />
-              <span>Cetak Laporan</span>
-            </button>
+            <div className="flex items-center gap-2">
+              {isAdmin && (
+                <button
+                  onClick={() => handlePrint()}
+                  className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all"
+                  title="Cetak Laporan"
+                >
+                  <Printer size={14} className="text-slate-600" />
+                  <span className="hidden sm:inline">Cetak</span>
+                </button>
+              )}
+
+              <button
+                onClick={logout}
+                className="bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 hover:border-rose-200 px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all"
+                title="Keluar / Logout"
+              >
+                <LogOut size={14} />
+                <span className="hidden sm:inline">Keluar</span>
+              </button>
+            </div>
           </header>
 
           {/* Content Views */}
@@ -554,31 +693,31 @@ export default function BituCalcApp() {
                   <div className="bg-slate-900 text-white rounded-2xl p-5 shadow-sm">
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-slate-400 text-[11px] font-bold uppercase tracking-wider">
-                        Total Penjualan (Omset)
+                        Total Wajib Setor Modal
                       </span>
                       <span className="text-[10px] font-bold bg-white/10 text-slate-300 px-2 py-0.5 rounded-md">
                         {sales.length} Transaksi
                       </span>
                     </div>
                     
-                    <h2 className="text-2xl font-bold tracking-tight">
-                      {formatCurrency(totalRevenue)}
+                    <h2 className="text-2xl font-bold tracking-tight text-amber-400">
+                      {formatCurrency(totalCost)}
                     </h2>
 
                     <div className="mt-4 grid grid-cols-2 gap-3 pt-3 border-t border-slate-800 text-xs">
                       <div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Wajib Setor Modal</span>
-                        <span className="font-bold text-amber-400">{formatCurrency(totalCost)}</span>
-                      </div>
-                      <div>
                         <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Sudah Ditransfer</span>
                         <span className="font-bold text-sky-400">{formatCurrency(totalPaid)}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Sisa Belum Disetor</span>
+                        <span className="font-bold text-rose-400">{formatCurrency(Math.max(0, totalCost - totalPaid))}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Product Type Selection */}
-                  <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm space-y-3">
+                  <div className="bg-white rounded-2xl p-4 border-2 border-slate-300/80 shadow-sm space-y-3">
                     <span className="text-xs uppercase font-bold text-slate-500 block">Pilih Produk</span>
                     <div className="grid grid-cols-3 gap-2">
                       {(['hitam', 'hijau', 'bitumax'] as ProductType[]).map((type) => {
@@ -589,10 +728,10 @@ export default function BituCalcApp() {
                             type="button"
                             onClick={() => setSelectedType(type)}
                             className={cn(
-                              "py-2.5 px-3 rounded-xl border text-center transition-all flex flex-col items-center justify-center gap-1",
+                              "py-2.5 px-3 rounded-xl border-2 text-center transition-all flex flex-col items-center justify-center gap-1",
                               isSelected
                                 ? "bg-slate-900 text-white border-slate-900 font-bold shadow-sm"
-                                : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                                : "bg-slate-50 border-slate-300 text-slate-700 hover:bg-slate-100 hover:border-slate-400"
                             )}
                           >
                             <span className={cn(
@@ -617,10 +756,10 @@ export default function BituCalcApp() {
                             type="button"
                             onClick={() => setWeight(p.weight)}
                             className={cn(
-                              "py-2 px-3 rounded-xl border text-xs font-bold transition-all text-center flex items-center justify-center gap-1",
+                              "py-2 px-3 rounded-xl border-2 text-xs font-bold transition-all text-center flex items-center justify-center gap-1",
                               isSelected
                                 ? "bg-slate-900 text-white border-slate-900 shadow-sm"
-                                : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                                : "bg-slate-50 border-slate-300 text-slate-700 hover:bg-slate-100 hover:border-slate-400"
                             )}
                           >
                             <span>{p.weight} kg</span>
@@ -631,10 +770,10 @@ export default function BituCalcApp() {
                         type="button"
                         onClick={() => setWeight(0)}
                         className={cn(
-                          "py-2 px-3 rounded-xl border text-xs font-bold transition-all text-center",
+                          "py-2 px-3 rounded-xl border-2 text-xs font-bold transition-all text-center",
                           weight === 0
                             ? "bg-slate-900 text-white border-slate-900 shadow-sm"
-                            : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                            : "bg-slate-50 border-slate-300 text-slate-700 hover:bg-slate-100 hover:border-slate-400"
                         )}
                       >
                         Custom kg
@@ -642,24 +781,24 @@ export default function BituCalcApp() {
                     </div>
 
                     {weight === 0 && (
-                      <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                      <div className="bg-slate-50 p-3 rounded-xl border-2 border-slate-300">
                         <span className="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Input Berat (kg)</span>
                         <input
                           type="number"
                           value={customWeight}
                           onChange={(e) => setCustomWeight(e.target.value)}
                           placeholder="Contoh: 12"
-                          className="w-full bg-white border border-slate-200 px-3 py-2 rounded-lg text-xs font-bold text-slate-900 focus:outline-none focus:border-slate-400"
+                          className="w-full bg-white border-2 border-slate-300 px-3 py-2 rounded-lg text-xs font-bold text-slate-900 focus:outline-none focus:border-slate-500"
                         />
                       </div>
                     )}
                   </div>
 
                   {/* Quantity & Date Form */}
-                  <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm grid grid-cols-2 gap-3">
+                  <div className="bg-white rounded-2xl p-4 border-2 border-slate-300/80 shadow-sm grid grid-cols-2 gap-3">
                     <div>
                       <span className="text-xs uppercase font-bold text-slate-500 block mb-1.5">Tanggal</span>
-                      <div className="bg-slate-50 border border-slate-200 px-2.5 py-2 rounded-xl flex items-center gap-1.5 h-10">
+                      <div className="bg-slate-50 border-2 border-slate-300 px-2.5 py-2 rounded-xl flex items-center gap-1.5 h-10">
                         <Calendar size={14} className="text-slate-400 shrink-0" />
                         <input
                           type="date"
@@ -672,11 +811,11 @@ export default function BituCalcApp() {
 
                     <div>
                       <span className="text-xs uppercase font-bold text-slate-500 block mb-1.5">Jumlah (Qty Pcs)</span>
-                      <div className="flex items-center justify-between bg-slate-50 border border-slate-200 px-2 py-1 rounded-xl h-10">
+                      <div className="flex items-center justify-between bg-slate-50 border-2 border-slate-300 px-2 py-1 rounded-xl h-10">
                         <button
                           type="button"
                           onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                          className="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-700 font-bold flex items-center justify-center hover:bg-slate-100"
+                          className="w-7 h-7 rounded-lg bg-white border border-slate-300 text-slate-800 font-extrabold flex items-center justify-center hover:bg-slate-100 active:scale-95 transition-all"
                         >
                           −
                         </button>
@@ -684,7 +823,7 @@ export default function BituCalcApp() {
                         <button
                           type="button"
                           onClick={() => setQuantity(quantity + 1)}
-                          className="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-700 font-bold flex items-center justify-center hover:bg-slate-100"
+                          className="w-7 h-7 rounded-lg bg-white border border-slate-300 text-slate-800 font-extrabold flex items-center justify-center hover:bg-slate-100 active:scale-95 transition-all"
                         >
                           +
                         </button>
@@ -693,14 +832,14 @@ export default function BituCalcApp() {
                   </div>
 
                   {/* Action Summary Card */}
-                  <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm space-y-3">
+                  <div className="bg-white rounded-2xl p-5 border-2 border-slate-300/80 shadow-sm space-y-3">
                     <div className="flex justify-between items-center">
                       <div>
-                        <span className="text-[10px] uppercase font-bold text-slate-500 block">Total Nominal</span>
-                        <span className="text-xl font-black text-slate-900">{formatCurrency(currentPrice)}</span>
+                        <span className="text-[10px] uppercase font-bold text-slate-500 block">Total Wajib Setor</span>
+                        <span className="text-xl font-black text-slate-900">{formatCurrency(totalSaleModal)}</span>
                       </div>
                       <div className="text-right text-[11px] text-slate-500">
-                        <span className="block font-semibold">@ {formatCurrency(calculatePricing(selectedType, effectiveWeight).price)}</span>
+                        <span className="block font-semibold">@ {formatCurrency(activeModalUnitPrice)}</span>
                         <span className="font-bold text-slate-900">{quantity} Pcs</span>
                       </div>
                     </div>
@@ -777,7 +916,7 @@ export default function BituCalcApp() {
                       </div>
                       <div>
                         <span className="text-slate-400 uppercase font-bold text-[9px] block mb-0.5">Transaksi</span>
-                        <span className="font-bold text-slate-200 text-sm">{analysisSales.length} Trans</span>
+                        <span className="font-bold text-slate-200 text-sm">{analysisSales.length} Transaksi</span>
                       </div>
                     </div>
                   </div>
@@ -880,23 +1019,6 @@ export default function BituCalcApp() {
                           <p className="text-slate-500 text-xs font-medium">Belum ada data penjualan pada periode ini</p>
                         </div>
                       )}
-                    </div>
-
-                    {/* Quick Print Card */}
-                    <div className="bg-slate-900 text-white p-4 rounded-xl flex items-center justify-between mt-4">
-                      <div>
-                        <p className="text-xs font-bold">Cetak Laporan Reseller</p>
-                        <p className="text-[10px] text-slate-400 mt-0.5">
-                          {analysisMonth ? `Periode ${analysisMonth}` : 'Semua Penjualan Terdaftar'}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => handlePrint(analysisMonth || undefined)}
-                        className="bg-white text-slate-900 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-100 transition-colors flex items-center gap-1.5"
-                      >
-                        <Printer size={14} />
-                        <span>Cetak Laporan</span>
-                      </button>
                     </div>
                   </div>
                 </motion.div>
@@ -1083,7 +1205,7 @@ export default function BituCalcApp() {
 
                   {/* Items */}
                   <div className="space-y-2">
-                    {filteredSales.map((sale) => (
+                    {paginatedSales.map((sale) => (
                       <div key={sale.id} className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-sm flex items-center justify-between text-xs">
                         <div>
                           <div className="flex items-center gap-1.5">
@@ -1102,11 +1224,21 @@ export default function BituCalcApp() {
                           </p>
                         </div>
 
-                        <div className="flex items-center gap-3">
-                          <span className="font-bold text-slate-900">{formatCurrency(sale.totalPrice)}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-slate-900 mr-1">{formatCurrency(sale.totalPrice)}</span>
+                          {isAdmin && (
+                            <button
+                              onClick={() => startEditSale(sale)}
+                              className="text-slate-400 hover:text-amber-600 transition-colors p-1 rounded-md hover:bg-slate-100"
+                              title="Edit transaksi"
+                            >
+                              <Pencil size={15} />
+                            </button>
+                          )}
                           <button
                             onClick={() => setDeleteConfirmId(sale.id)}
-                            className="text-slate-400 hover:text-rose-500 transition-colors"
+                            className="text-slate-400 hover:text-rose-500 transition-colors p-1 rounded-md hover:bg-slate-100"
+                            title="Hapus transaksi"
                           >
                             <Trash2 size={15} />
                           </button>
@@ -1120,22 +1252,49 @@ export default function BituCalcApp() {
                       </div>
                     )}
                   </div>
+
+                  {/* Pagination Controls */}
+                  {totalHistoryPages > 1 && (
+                    <div className="flex items-center justify-between pt-3 text-xs bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                      <button
+                        onClick={() => setHistoryPage(prev => Math.max(prev - 1, 1))}
+                        disabled={historyPage === 1}
+                        className="px-3 py-1.5 rounded-lg border border-slate-200 font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 transition-all"
+                      >
+                        <ChevronLeft size={14} />
+                        <span>Sebelumnya</span>
+                      </button>
+
+                      <span className="font-bold text-slate-600 text-xs">
+                        Halaman <strong className="text-slate-900">{historyPage}</strong> dari <strong className="text-slate-900">{totalHistoryPages}</strong>
+                      </span>
+
+                      <button
+                        onClick={() => setHistoryPage(prev => Math.min(prev + 1, totalHistoryPages))}
+                        disabled={historyPage === totalHistoryPages}
+                        className="px-3 py-1.5 rounded-lg border border-slate-200 font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 transition-all"
+                      >
+                        <span>Selanjutnya</span>
+                        <ChevronRight size={14} />
+                      </button>
+                    </div>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
 
           {/* Floating Bottom Navigation Bar */}
-          <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-1 flex items-center justify-around z-50 no-print shadow-lg">
+          <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-1.5 flex items-center justify-around z-50 no-print shadow-xl">
             <button
               onClick={() => setActiveTab('calculator')}
               className={cn(
-                "flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition-all relative",
-                activeTab === 'calculator' ? "text-slate-900 font-bold" : "text-slate-400 hover:text-slate-700"
+                "flex-1 py-2.5 rounded-xl flex flex-col items-center gap-0.5 transition-all relative",
+                activeTab === 'calculator' ? "text-white font-bold" : "text-slate-500 hover:text-slate-900 font-medium"
               )}
             >
               {activeTab === 'calculator' && (
-                <motion.div layoutId="activeTab" className="absolute inset-0 bg-slate-100 rounded-xl" />
+                <motion.div layoutId="activeTab" className="absolute inset-0 bg-slate-900 rounded-xl shadow-md" />
               )}
               <span className="relative z-10 flex flex-col items-center gap-0.5">
                 <Calculator size={17} />
@@ -1146,12 +1305,12 @@ export default function BituCalcApp() {
             <button
               onClick={() => setActiveTab('analysis')}
               className={cn(
-                "flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition-all relative",
-                activeTab === 'analysis' ? "text-slate-900 font-bold" : "text-slate-400 hover:text-slate-700"
+                "flex-1 py-2.5 rounded-xl flex flex-col items-center gap-0.5 transition-all relative",
+                activeTab === 'analysis' ? "text-white font-bold" : "text-slate-500 hover:text-slate-900 font-medium"
               )}
             >
               {activeTab === 'analysis' && (
-                <motion.div layoutId="activeTab" className="absolute inset-0 bg-slate-100 rounded-xl" />
+                <motion.div layoutId="activeTab" className="absolute inset-0 bg-slate-900 rounded-xl shadow-md" />
               )}
               <span className="relative z-10 flex flex-col items-center gap-0.5">
                 <BarChart3 size={17} />
@@ -1159,31 +1318,33 @@ export default function BituCalcApp() {
               </span>
             </button>
 
-            <button
-              onClick={() => setActiveTab('payment')}
-              className={cn(
-                "flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition-all relative",
-                activeTab === 'payment' ? "text-slate-900 font-bold" : "text-slate-400 hover:text-slate-700"
-              )}
-            >
-              {activeTab === 'payment' && (
-                <motion.div layoutId="activeTab" className="absolute inset-0 bg-slate-100 rounded-xl" />
-              )}
-              <span className="relative z-10 flex flex-col items-center gap-0.5">
-                <CreditCard size={17} />
-                <span className="text-[10px] uppercase font-bold tracking-wider">Setoran</span>
-              </span>
-            </button>
+            {isAdmin && (
+              <button
+                onClick={() => setActiveTab('payment')}
+                className={cn(
+                  "flex-1 py-2.5 rounded-xl flex flex-col items-center gap-0.5 transition-all relative",
+                  activeTab === 'payment' ? "text-white font-bold" : "text-slate-500 hover:text-slate-900 font-medium"
+                )}
+              >
+                {activeTab === 'payment' && (
+                  <motion.div layoutId="activeTab" className="absolute inset-0 bg-slate-900 rounded-xl shadow-md" />
+                )}
+                <span className="relative z-10 flex flex-col items-center gap-0.5">
+                  <CreditCard size={17} />
+                  <span className="text-[10px] uppercase font-bold tracking-wider">Setoran</span>
+                </span>
+              </button>
+            )}
 
             <button
               onClick={() => setActiveTab('history')}
               className={cn(
-                "flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition-all relative",
-                activeTab === 'history' ? "text-slate-900 font-bold" : "text-slate-400 hover:text-slate-700"
+                "flex-1 py-2.5 rounded-xl flex flex-col items-center gap-0.5 transition-all relative",
+                activeTab === 'history' ? "text-white font-bold" : "text-slate-500 hover:text-slate-900 font-medium"
               )}
             >
               {activeTab === 'history' && (
-                <motion.div layoutId="activeTab" className="absolute inset-0 bg-slate-100 rounded-xl" />
+                <motion.div layoutId="activeTab" className="absolute inset-0 bg-slate-900 rounded-xl shadow-md" />
               )}
               <span className="relative z-10 flex flex-col items-center gap-0.5">
                 <History size={17} />
@@ -1278,6 +1439,140 @@ export default function BituCalcApp() {
                     Hapus
                   </button>
                 </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+      {/* Edit Sale Modal */}
+      <AnimatePresence>
+        {editingSale && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 no-print">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setEditingSale(null)}
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs"
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              className="relative bg-white border border-slate-200 w-full max-w-xs rounded-2xl p-5 shadow-xl overflow-hidden space-y-4"
+            >
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 bg-amber-50 border border-amber-100 rounded-lg flex items-center justify-center">
+                    <Pencil size={14} className="text-amber-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-bold text-slate-900">Edit Data Transaksi</h3>
+                    <p className="text-[10px] text-slate-400">ID: #{editingSale.id.substring(0, 8)}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setEditingSale(null)}
+                  className="text-slate-400 hover:text-slate-600 text-xs font-bold px-2 py-0.5 rounded-md hover:bg-slate-100"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Form Controls */}
+              <div className="space-y-3">
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-500 block mb-1">Jenis Produk</span>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {(['hitam', 'hijau', 'bitumax'] as ProductType[]).map((type) => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => {
+                          setEditType(type);
+                          const validWeights = PRICES[type].map(p => p.weight);
+                          if (!validWeights.includes(editWeight)) {
+                            setEditWeight(validWeights[0]);
+                          }
+                        }}
+                        className={cn(
+                          "py-1.5 rounded-lg border text-[11px] font-bold uppercase transition-all",
+                          editType === type ? "bg-slate-900 text-white border-slate-900 font-bold shadow-sm" : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                        )}
+                      >
+                        {type}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-500 block mb-1">Ukuran (kg)</span>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {PRICES[editType].map((p) => {
+                      const isSelected = Number(editWeight) === Number(p.weight);
+                      return (
+                        <button
+                          key={p.weight}
+                          type="button"
+                          onClick={() => setEditWeight(p.weight)}
+                          className={cn(
+                            "py-1.5 rounded-lg border text-xs font-bold transition-all",
+                            isSelected
+                              ? "bg-slate-900 text-white border-slate-900 font-bold shadow-sm"
+                              : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                          )}
+                        >
+                          {p.weight} kg
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-500 block mb-1">Tanggal</span>
+                    <input
+                      type="date"
+                      value={editDate}
+                      onChange={(e) => setEditDate(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 px-2 py-1.5 rounded-xl text-xs font-bold text-slate-900 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-500 block mb-1">Jumlah (Qty Pcs)</span>
+                    <input
+                      type="number"
+                      min="1"
+                      value={editQuantity}
+                      onChange={(e) => setEditQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="w-full bg-slate-50 border border-slate-200 px-2 py-1.5 rounded-xl text-xs font-bold text-slate-900 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="bg-amber-50/80 border border-amber-200/80 p-2.5 rounded-xl flex items-center justify-between text-xs">
+                  <span className="font-bold text-amber-900 text-[10px] uppercase">Wajib Setor Modal:</span>
+                  <span className="font-black text-amber-900 text-xs">
+                    {formatCurrency(calculatePricing(editType, editWeight).cost * editQuantity)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+                <button
+                  onClick={() => setEditingSale(null)}
+                  className="py-2 rounded-xl border border-slate-200 font-bold text-slate-600 hover:bg-slate-50 transition-colors text-xs"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleUpdateSale}
+                  className="py-2 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-colors shadow-sm text-xs"
+                >
+                  Simpan Perubahan
+                </button>
               </div>
             </motion.div>
           </div>

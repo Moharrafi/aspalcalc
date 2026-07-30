@@ -44,3 +44,24 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export async function PUT(request: Request) {
+  try {
+    const body = await request.json();
+    const { id, date, type, weight, quantity, totalPrice, totalCost } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID required' }, { status: 400 });
+    }
+
+    await pool.query(
+      'UPDATE sales SET date = ?, type = ?, weight = ?, quantity = ?, totalPrice = ?, totalCost = ? WHERE id = ?',
+      [date, type, weight, quantity, totalPrice, totalCost, id]
+    );
+
+    return NextResponse.json({ message: 'Sale updated', id });
+  } catch (error: any) {
+    console.error('Database error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
