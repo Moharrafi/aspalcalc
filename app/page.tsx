@@ -60,21 +60,21 @@ interface PricePoint {
 
 const PRICES: Record<ProductType, PricePoint[]> = {
   bitumax: [
-    { weight: 1, price: 50000, cost: 50000 },
-    { weight: 5, price: 190000, cost: 190000 },
-    { weight: 20, price: 720000, cost: 720000 },
+    { weight: 1, price: 50000, cost: 40000 },
+    { weight: 5, price: 190000, cost: 152000 },
+    { weight: 20, price: 720000, cost: 606000 },
   ],
   hijau: [
-    { weight: 1, price: 33000, cost: 33000 },
-    { weight: 5, price: 130000, cost: 130000 },
-    { weight: 20, price: 600000, cost: 600000 },
-    { weight: 25, price: 650000, cost: 650000 },
+    { weight: 1, price: 33000, cost: 26400 },
+    { weight: 5, price: 130000, cost: 104000 },
+    { weight: 20, price: 600000, cost: 480000 },
+    { weight: 25, price: 650000, cost: 520000 },
   ],
   hitam: [
-    { weight: 1, price: 33000, cost: 33000 },
-    { weight: 5, price: 130000, cost: 130000 },
-    { weight: 20, price: 600000, cost: 600000 },
-    { weight: 25, price: 650000, cost: 650000 },
+    { weight: 1, price: 33000, cost: 26400 },
+    { weight: 5, price: 130000, cost: 104000 },
+    { weight: 20, price: 600000, cost: 480000 },
+    { weight: 25, price: 650000, cost: 520000 },
   ],
 };
 
