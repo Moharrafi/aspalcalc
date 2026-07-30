@@ -1,7 +1,11 @@
 node_modules/
 .next/
+out/
 coverage/
 .DS_Store
 *.log
 .env*
 !.env.example
+android/build/
+android/app/build/
+android/.gradle/
